@@ -67,15 +67,25 @@ fn compare(x: i8, y: i8) -> i8 {
 }
 
 fn main() {
-    let thor  = Coord {x:5, y: 4};
-    let light = Coord {x:31, y: 4};
+    let mut thor  = Coord {x:5, y: 4};
+    let light = Coord {x:31, y: 12};
+    let mut journey = Vec::new();
 
     println!("Start at {:?}", thor);
     println!("Goto {:?}", light);
 
-    let direction = thor.direction_to(&light);
-    println!("Go to {}", direction);
-    println!("Thor is now at {:?}", thor.move_to(&direction));
+    loop {
+        let direction = thor.direction_to(&light);
+        if direction == "X" {
+            break;
+        }
+        thor = thor.move_to(&direction);
+        journey.push(direction); // journey own direction now
+    }
+
+    println!("It took {} steps to reach the light", journey.len());
+    println!("journey: {:?}", journey);
+    // To replay the journey just reverse the vec and pop until empty
 }
 
 
