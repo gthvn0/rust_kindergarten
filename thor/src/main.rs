@@ -58,6 +58,7 @@ impl Coord {
             _ =>  String::from("X"), // Don't move, you reached the destination
         }
     }
+
 }
 
 fn compare(x: i8, y: i8) -> i8 {
@@ -66,23 +67,30 @@ fn compare(x: i8, y: i8) -> i8 {
     0
 }
 
-fn main() {
-    let mut thor  = Coord {x:5, y: 4};
-    let light = Coord {x:31, y: 12};
+fn compute_journey(start: &Coord, dest: &Coord) -> Vec<String> {
+    let mut thor = Coord {x:start.x, y: start.y};
     let mut journey = Vec::new();
+
+        loop {
+            let direction = thor.direction_to(&dest);
+            if direction == "X" {
+                break;
+            }
+            thor = thor.move_to(&direction);
+            journey.push(direction); // journey own direction now
+        }
+
+        journey
+}
+
+fn main() {
+    let thor  = Coord {x:5, y: 4};
+    let light = Coord {x:31, y: 12};
 
     println!("Start at {:?}", thor);
     println!("Goto {:?}", light);
 
-    loop {
-        let direction = thor.direction_to(&light);
-        if direction == "X" {
-            break;
-        }
-        thor = thor.move_to(&direction);
-        journey.push(direction); // journey own direction now
-    }
-
+    let journey = compute_journey(&thor, &light);
     println!("It took {} steps to reach the light", journey.len());
     println!("journey: {:?}", journey);
     // To replay the journey just reverse the vec and pop until empty
