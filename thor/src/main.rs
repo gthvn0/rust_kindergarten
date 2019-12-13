@@ -11,26 +11,26 @@
 //
 
 #[derive(Debug, PartialEq, Eq)]
-struct Point {
+struct Coord {
     x: i8,
     y: i8,
 }
 
-const N: Point  = Point {x: 0, y:-1};
-const NE: Point = Point {x: 1, y: -1};
-const E: Point  = Point {x: 1, y: 0};
-const SE: Point = Point {x: 1, y: 1};
-const S: Point  = Point {x: 0, y: 1};
-const SW: Point = Point {x: -1, y: 1};
-const W: Point  = Point {x: -1, y: 0};
-const NW: Point = Point {x: -1, y: -1};
+const N: Coord  = Coord {x: 0, y:-1};
+const NE: Coord = Coord {x: 1, y: -1};
+const E: Coord  = Coord {x: 1, y: 0};
+const SE: Coord = Coord {x: 1, y: 1};
+const S: Coord  = Coord {x: 0, y: 1};
+const SW: Coord = Coord {x: -1, y: 1};
+const W: Coord  = Coord {x: -1, y: 0};
+const NW: Coord = Coord {x: -1, y: -1};
 
-impl Point {
-    fn add(&self, pt: &Point) -> Point {
-        Point {x: self.x + pt.x, y: self.y + pt.y}
+impl Coord {
+    fn add(&self, pt: &Coord) -> Coord {
+        Coord {x: self.x + pt.x, y: self.y + pt.y}
     }
 
-    fn move_to(&self, dest: &str) -> Point {
+    fn move_to(&self, dest: &str) -> Coord {
         match dest {
             "N" =>  self.add(&N),
             "NE" => self.add(&NE),
@@ -44,8 +44,8 @@ impl Point {
         }
     }
 
-    fn path_to(&self, dest: &Point) -> String {
-        let pt = Point {x:compare(self.x, dest.x), y: compare(self.y, dest.y)};
+    fn direction_to(&self, dest: &Coord) -> String {
+        let pt = Coord {x:compare(self.x, dest.x), y: compare(self.y, dest.y)};
         match pt {
             N =>  String::from("N"),
             NE => String::from("NE"),
@@ -67,13 +67,13 @@ fn compare(x: i8, y: i8) -> i8 {
 }
 
 fn main() {
-    let thor  = Point {x:5, y: 4};
-    let light = Point {x:31, y: 4};
+    let thor  = Coord {x:5, y: 4};
+    let light = Coord {x:31, y: 4};
 
     println!("Start at {:?}", thor);
     println!("Goto {:?}", light);
 
-    let direction = thor.path_to(&light);
+    let direction = thor.direction_to(&light);
     println!("Go to {}", direction);
     println!("Thor is now at {:?}", thor.move_to(&direction));
 }
@@ -81,16 +81,16 @@ fn main() {
 
 #[test]
 fn test_all_destinations() {
-    let start = Point {x:5, y:5};
+    let start = Coord {x:5, y:5};
 
-    assert_eq!(start.path_to(&Point{x:5,y:5}), "X");
-    assert_eq!(start.path_to(&Point{x:5,y:2}), "N");
-    assert_eq!(start.path_to(&Point{x:7,y:2}), "NE");
-    assert_eq!(start.path_to(&Point{x:6,y:2}), "NE");
-    assert_eq!(start.path_to(&Point{x:8,y:5}), "E");
-    assert_eq!(start.path_to(&Point{x:7,y:9}), "SE");
-    assert_eq!(start.path_to(&Point{x:5,y:9}), "S");
-    assert_eq!(start.path_to(&Point{x:3,y:9}), "SW");
-    assert_eq!(start.path_to(&Point{x:3,y:5}), "W");
-    assert_eq!(start.path_to(&Point{x:3,y:2}), "NW");
+    assert_eq!(start.direction_to(&Coord{x:5,y:5}), "X");
+    assert_eq!(start.direction_to(&Coord{x:5,y:2}), "N");
+    assert_eq!(start.direction_to(&Coord{x:7,y:2}), "NE");
+    assert_eq!(start.direction_to(&Coord{x:6,y:2}), "NE");
+    assert_eq!(start.direction_to(&Coord{x:8,y:5}), "E");
+    assert_eq!(start.direction_to(&Coord{x:7,y:9}), "SE");
+    assert_eq!(start.direction_to(&Coord{x:5,y:9}), "S");
+    assert_eq!(start.direction_to(&Coord{x:3,y:9}), "SW");
+    assert_eq!(start.direction_to(&Coord{x:3,y:5}), "W");
+    assert_eq!(start.direction_to(&Coord{x:3,y:2}), "NW");
 }
