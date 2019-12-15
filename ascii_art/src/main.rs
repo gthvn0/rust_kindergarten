@@ -23,7 +23,12 @@
 // ###
 
 fn get_slice_for_letter(c: char, width: usize, ascii: &str) -> &str {
-    let diff = (c.to_ascii_uppercase() as usize) - ('A' as usize);
+    let diff = if c.is_alphanumeric() {
+        (c.to_ascii_uppercase() as usize) - ('A' as usize)
+    }
+    else {
+        26
+    };
     &ascii[diff * width..(diff + 1) * width]
 }
 
@@ -52,17 +57,12 @@ fn main() {
     // B -> l..2l
     // C -> 2l..3l
     let mut ascii = Vec::new();
-    ascii.push(String::from(" #  ##   ## ##  ### ###  ## # # ###  ## # # #   # # ###  #  ##   #  ##   ## ### # # # # # # # # # # ### ###"));
-    ascii.push(String::from("# # # # #   # # #   #   #   # #  #    # # # #   ### # # # # # # # # # # #    #  # # # # # # # # # #   #   #"));
-    ascii.push(String::from("### ##  #   # # ##  ##  # # ###  #    # ##  #   ### # # # # ##  # # ##   #   #  # # # # ###  #   #   #   ##"));
-    ascii.push(String::from("# # # # #   # # #   #   # # # #  #  # # # # #   # # # # # # #    ## # #   #  #  # # # # ### # #  #  #      "));
-    ascii.push(String::from("# # ##   ## ##  ### #    ## # # ###  #  # # ### # # # #  #  #     # # # ##   #  ###  #  # # # #  #  ###  # "));
+    ascii.push(String::from(" #  ##   ## ##  ### ###  ## # # ###  ## # # #   # # ###  #  ##   #  ##   ## ### # # # # # # # # # # ### ### "));
+    ascii.push(String::from("# # # # #   # # #   #   #   # #  #    # # # #   ### # # # # # # # # # # #    #  # # # # # # # # # #   #   # "));
+    ascii.push(String::from("### ##  #   # # ##  ##  # # ###  #    # ##  #   ### # # # # ##  # # ##   #   #  # # # # ###  #   #   #   ## "));
+    ascii.push(String::from("# # # # #   # # #   #   # # # #  #  # # # # #   # # # # # # #    ## # #   #  #  # # # # ### # #  #  #       "));
+    ascii.push(String::from("# # ##   ## ##  ### #    ## # # ###  #  # # ### # # # #  #  #     # # # ##   #  ###  #  # # # #  #  ###  #  "));
 
-    let t = String::from("HellO");
-    display_ascii(&t, l, &ascii);
-
-    println!("\n");
-
-    let t = String::from("Manhattan");
+    let t = String::from("M@NH@TT@N");
     display_ascii(&t, l, &ascii);
 }
