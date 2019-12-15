@@ -27,7 +27,7 @@ fn get_slice_for_letter(c: char, width: usize, ascii: &str) -> &str {
     &ascii[diff * width..(diff + 1) * width]
 }
 
-fn display_ascii(slice: &str, width: usize, ascii: &Vec<&str>) {
+fn display_ascii(slice: &str, width: usize, ascii: &Vec<String>) {
     let mut iterator = ascii.iter();
     loop {
         match iterator.next() {
@@ -52,17 +52,17 @@ fn main() {
     // B -> l..2l
     // C -> 2l..3l
     let mut ascii = Vec::new();
-    ascii.push(" #  ##   ## ##  ### ###  ## # # ###  ## # # #   # # ###  #  ##   #  ##   ## ### # # # # # # # # # # ### ###");
-    ascii.push("# # # # #   # # #   #   #   # #  #    # # # #   ### # # # # # # # # # # #    #  # # # # # # # # # #   #   #");
-    ascii.push("### ##  #   # # ##  ##  # # ###  #    # ##  #   ### # # # # ##  # # ##   #   #  # # # # ###  #   #   #   ##");
-    ascii.push("# # # # #   # # #   #   # # # #  #  # # # # #   # # # # # # #    ## # #   #  #  # # # # ### # #  #  #      ");
-    ascii.push("# # ##   ## ##  ### #    ## # # ###  #  # # ### # # # #  #  #     # # # ##   #  ###  #  # # # #  #  ###  # ");
+    ascii.push(String::from(" #  ##   ## ##  ### ###  ## # # ###  ## # # #   # # ###  #  ##   #  ##   ## ### # # # # # # # # # # ### ###"));
+    ascii.push(String::from("# # # # #   # # #   #   #   # #  #    # # # #   ### # # # # # # # # # # #    #  # # # # # # # # # #   #   #"));
+    ascii.push(String::from("### ##  #   # # ##  ##  # # ###  #    # ##  #   ### # # # # ##  # # ##   #   #  # # # # ###  #   #   #   ##"));
+    ascii.push(String::from("# # # # #   # # #   #   # # # #  #  # # # # #   # # # # # # #    ## # #   #  #  # # # # ### # #  #  #      "));
+    ascii.push(String::from("# # ##   ## ##  ### #    ## # # ###  #  # # ### # # # #  #  #     # # # ##   #  ###  #  # # # #  #  ###  # "));
 
-    let t = "HellO";
+    let t = String::from("HellO");
     display_ascii(&t, l, &ascii);
 
     println!("\n");
 
-    let t = "Manhattan";
+    let t = String::from("Manhattan");
     display_ascii(&t, l, &ascii);
 }
