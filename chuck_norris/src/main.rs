@@ -10,22 +10,16 @@
 //     bits in the series
 
 fn to_binary(x: usize) -> Vec<u8> {
-
     if x == 0 {
         return vec![0];
     }
 
-    const DIVISOR:usize = 2;
     let mut v = Vec::new();
-    let mut quotient = x;
-    let mut reminder;
+    let mut val = x;
 
-    while quotient != 0 {
-        let x = quotient;
-
-        quotient = x / DIVISOR;
-        reminder = x % DIVISOR;
-        v.push(reminder as u8);
+    while val != 0 {
+        v.push((val & 0x1) as u8);
+        val >>= 1;
     }
 
     v.reverse();
@@ -37,6 +31,11 @@ fn main() {
     println!("1 -> {:?}", to_binary(1));
     println!("2 -> {:?}", to_binary(2));
     println!("3 -> {:?}", to_binary(3));
+
+    let v = 2u8;
+    println!("{:b}, {}, {}", v, v & 0x1, v.rotate_right(1) & 0x1);
+    let v = 3u8;
+    println!("{:b}, {}, {}", v, v & 0x1, v.rotate_right(1) & 0x1);
 
     let c_ascii = 'C' as usize;
     println!("C: {} ({:b}) -> {:?}", c_ascii, c_ascii, to_binary(c_ascii));
