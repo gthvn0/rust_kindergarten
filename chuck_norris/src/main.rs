@@ -9,8 +9,17 @@
 //   - Second block: the number of 0 in this block is the number of
 //     bits in the series
 
+// Hello -> [72, 101, 101, 11]
+fn decompose(s: &str) -> Vec<u8> {
+    let mut res = Vec::new();
+    for c in s.chars() {
+       res.push(c as u8);
+    }
+    res
+}
+
 // 12 -> [1, 1, 0, 0]
-fn to_binary(x: usize) -> Vec<u8> {
+fn to_binary(x: u8) -> Vec<u8> {
     if x == 0 {
         return vec![0];
     }
@@ -64,7 +73,7 @@ fn chuck_translator(s: &str) -> String {
     let mut chuck = String::new();
 
     for c in s.chars() {
-        let c_ascii = c as usize;
+        let c_ascii = c as u8;
         let v1 =  to_binary(c_ascii);
         for (n, v) in transform_vec(&v1) {
             chuck.push_str(&speak_chuck(n, v));
@@ -81,7 +90,9 @@ fn main() {
     println!("{}", chuck_translator("Hello"));
     println!("{}", chuck_translator("C"));
 
-    let c_ascii = 'C' as usize;
+    println!("Hello -> {:?}", decompose("Hello"));
+
+    let c_ascii = 'C' as u8;
     let v1 = to_binary(c_ascii);
     print!("C: {} ({:b}) -> {:?} -> ", c_ascii, c_ascii, v1);
 
@@ -93,6 +104,11 @@ fn main() {
     }
 
     println!("\n");
+}
+
+#[test]
+fn test_decompose() {
+    assert_eq!(decompose("Hello"), vec![72, 101, 108, 108, 111]);
 }
 
 #[test]
