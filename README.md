@@ -13,8 +13,8 @@ cargo new --vcs none <project_name>
 * **temperatures**: Found the closest temperature to 0 in a given list.
 * **thor**: just compute the direction and path from Thor to the Light.
 
-## Medium Puzzles
+### Medium Puzzles
 
-## Hard Puzzles
+### Hard Puzzles
         
-## Very Hard Puzzles        
+### Very Hard Puzzles        
