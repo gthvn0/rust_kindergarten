@@ -46,12 +46,33 @@ fn transform_vec(v: &[u8]) -> Vec<(u8, u8)> {
     res
 }
 
+// (2, 1) -> 0 00
+// (3, 0) -> 00 000
+// (1, 0) -> 00 0
+// ...
+fn speak_chuck(nb: u8, val: u8) -> String {
+    let mut chuck = if val == 0 {String::from("00 ")} else {String::from("0 ")};
+    for _ in 0..nb {
+        chuck.push('0');
+    }
+
+    chuck
+}
+
 fn main() {
 
     let c_ascii = 'C' as usize;
     let v1 = to_binary(c_ascii);
-    println!("C: {} ({:b}) -> {:?}", c_ascii, c_ascii, to_binary(c_ascii));
-    println!("{:?}", transform_vec(&v1));
+    print!("C: {} ({:b}) -> {:?} -> ", c_ascii, c_ascii, v1);
+
+    let trans =  transform_vec(&v1);
+    print!("{:?} -> ", trans);
+
+    for (n, v) in trans {
+        print!("{} ", speak_chuck(n, v));
+    }
+
+    println!("\n");
 }
 
 #[test]
@@ -69,4 +90,11 @@ fn test_transform_vec() {
     assert_eq!(transform_vec(&[1, 0, 0, 0, 0, 1]), vec![(1, 1), (4, 0), (1, 1)]);
     assert_eq!(transform_vec(&[1]), vec![(1, 1)]);
     assert_eq!(transform_vec(&[0]), vec![(1, 0)]);
+}
+
+#[test]
+fn test_speak_chuck() {
+    assert_eq!(speak_chuck(3, 0), "00 000");
+    assert_eq!(speak_chuck(1, 0), "00 0");
+    assert_eq!(speak_chuck(5, 1), "0 00000");
 }
