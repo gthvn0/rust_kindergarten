@@ -1,11 +1,11 @@
-# rust_kindergarten
-## Rust playground
+# Rust Kindergarten
+
 Directories are containing independant Rust projects created using:
 ```
 cargo new --vcs none <project_name>
 ```
 
-### Easy Puzzles
+## Easy Puzzles
 
 * **ascii_art**: Draw letters with the ASCII art representation given as
   parameter.
@@ -13,8 +13,8 @@ cargo new --vcs none <project_name>
 * **temperatures**: Found the closest temperature to 0 in a given list.
 * **thor**: just compute the direction and path from Thor to the Light.
 
-### Medium Puzzles
+## Medium Puzzles
 
-### Hard Puzzles
+## Hard Puzzles
         
-### Very Hard Puzzles        
+## Very Hard Puzzles        
