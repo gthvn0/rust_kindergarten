@@ -9,6 +9,7 @@
 //   - Second block: the number of 0 in this block is the number of
 //     bits in the series
 
+// 12 -> [1, 1, 0, 0]
 fn to_binary(x: usize) -> Vec<u8> {
     if x == 0 {
         return vec![0];
@@ -26,20 +27,46 @@ fn to_binary(x: usize) -> Vec<u8> {
     v
 }
 
-fn main() {
-    println!("0 -> {:?}", to_binary(0));
-    println!("1 -> {:?}", to_binary(1));
-    println!("2 -> {:?}", to_binary(2));
-    println!("3 -> {:?}", to_binary(3));
+// [1, 1, 0, 0, 0, 1, 1, 0, 1] => [(2, 1), (3, 0), (2, 1), (1, 0), (1, 1)]
+fn transform_vec(v: &[u8]) -> Vec<(u8, u8)> {
+    let mut res = Vec::new();
+    let mut current_val = v[0];
+    let mut current_num = 0;
 
-    let v = 2u8;
-    println!("{:b}, {}, {}", v, v & 0x1, v.rotate_right(1) & 0x1);
-    let v = 3u8;
-    println!("{:b}, {}, {}", v, v & 0x1, v.rotate_right(1) & 0x1);
+    for val in v.iter() {
+        if *val == current_val {
+            current_num += 1;
+        } else  {
+            res.push((current_num, current_val));
+            current_val = *val;
+            current_num = 1;
+        }
+    }
+    res.push((current_num, current_val));
+    res
+}
+
+fn main() {
 
     let c_ascii = 'C' as usize;
+    let v1 = to_binary(c_ascii);
     println!("C: {} ({:b}) -> {:?}", c_ascii, c_ascii, to_binary(c_ascii));
+    println!("{:?}", transform_vec(&v1));
+}
 
-    let c_ascii = 'c' as usize;
-    println!("C: {} ({:b}) -> {:?}", c_ascii, c_ascii, to_binary(c_ascii));
+#[test]
+fn test_to_binary() {
+    assert_eq!(to_binary(0), vec![0]);
+    assert_eq!(to_binary(1), vec![1]);
+    assert_eq!(to_binary(12), vec![1, 1, 0, 0]);
+    assert_eq!(to_binary(41), vec![1, 0, 1, 0, 0, 1]);
+    assert_eq!(to_binary(118), vec![1, 1, 1, 0, 1, 1, 0]);
+}
+
+#[test]
+fn test_transform_vec() {
+    assert_eq!(transform_vec(&[1, 1, 0, 0, 0, 1, 1, 0, 1]), vec![(2, 1), (3, 0), (2, 1), (1, 0), (1, 1)]);
+    assert_eq!(transform_vec(&[1, 0, 0, 0, 0, 1]), vec![(1, 1), (4, 0), (1, 1)]);
+    assert_eq!(transform_vec(&[1]), vec![(1, 1)]);
+    assert_eq!(transform_vec(&[0]), vec![(1, 0)]);
 }
