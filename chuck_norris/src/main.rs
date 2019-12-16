@@ -59,7 +59,27 @@ fn speak_chuck(nb: u8, val: u8) -> String {
     chuck
 }
 
+fn chuck_translator(s: &str) -> String {
+
+    let mut chuck = String::new();
+
+    for c in s.chars() {
+        let c_ascii = c as usize;
+        let v1 =  to_binary(c_ascii);
+        for (n, v) in transform_vec(&v1) {
+            chuck.push_str(&speak_chuck(n, v));
+            chuck.push(' ');
+        }
+    }
+    // just pop the last spurious space
+    chuck.pop().unwrap();
+    chuck
+}
+
 fn main() {
+
+    println!("{}", chuck_translator("Hello"));
+    println!("{}", chuck_translator("C"));
 
     let c_ascii = 'C' as usize;
     let v1 = to_binary(c_ascii);
