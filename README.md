@@ -10,5 +10,5 @@ cargo new --vcs none <project_name>
 ```
 
 Most of exercices are taken from:
-- [coding game](www.codingame.com)
+- [coding game](https://www.codingame.com)
 - [code wars](https://www.codewars.com)
