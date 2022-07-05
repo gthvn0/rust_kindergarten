@@ -9,6 +9,8 @@ My [Rust](https://www.rust-lang.org/) playground
 - Create a tool to manage directoris as bookmark.
 - It will return a string that will be the directory to move on.
   - We will create an alias in the shell to *cd* into the directory
+	- a little trick like: `alias bm='f(){ echo "$1"; cd $(/path/to/bmr);  unset -f f; }; f'`
+	- and adjusting parameters to fit **bmr**
   - So we renamed the binary **bmr** to avoir confusion
 
 ### TODO
