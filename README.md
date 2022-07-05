@@ -12,13 +12,12 @@ My [Rust](https://www.rust-lang.org/) playground
 ```
 cargo new --vcs none bm
 ```
-- [ ] Start by following the [Rust CLI tutorial](https://rust-cli.github.io/book/tutorial/setup.html)
-
-- [ ] Next steps is to transform it to allow
+- [X] Start by following the [Rust CLI tutorial](https://rust-cli.github.io/book/tutorial/setup.html)
+- [X] Update CLI to do:
   - `bm -l`: list all available bookmarks
   - `bm -d <bookmark name>`: delete the bookmark
   - `bm -a <bookmark name>`: add the current directory as a bookmark named *named*
-  - bookmarks will be stored in a file like **.bm.yml**.
+- [ ] Implement the function using file like for bookmarks **.bm.yml**.
   
 
 ## Codingame
