@@ -1,6 +1,6 @@
 [package]
-name = "bm"
-description = "BookMark for directories"
+name = "bmr"
+description = "BookMark for directories in Rust"
 license = "MIT OR Apache-2.0"
 version = "0.1.0"
 edition = "2021"
@@ -9,3 +9,4 @@ edition = "2021"
 
 [dependencies]
 clap = { version = "3.2.8", features = ["derive"] }
+yaml-rust = "0.4"
