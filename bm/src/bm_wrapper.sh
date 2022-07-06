@@ -17,7 +17,7 @@ function bm () {
     BMK_FILE="./bm.yaml"
     ARGS="$@"
 
-    if [ $# -eq 0 ] || [ "${ARGS:0:1}" = "-" ]
+    if [ $# -eq 0 ] || [ "${ARGS:0:1}" = "-" ] || [ "$1" = "add" ] || [ "$1" = "del" ] || [ "$1" = "list" ]
     then
 	${BMR} ${BMK_FILE} ${ARGS}
     else

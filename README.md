@@ -28,6 +28,11 @@ cargo new --vcs none bm
 - [ ] Fix errors when deleting wrong entry
 - [X] Fix issues when loading empty bookmark
 - [X] Add some coloration
+- [X] New commands are supported. You can now do
+  - `bmr list`: list all available bookmarks
+  - `bmr del <bookmark name>`: delete the bookmark
+  - `bmr add <bookmark name>`: add the current directory as a bookmark named *named*
+
 
 ### Usage
 
