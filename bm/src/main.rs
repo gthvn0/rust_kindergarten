@@ -99,10 +99,10 @@ fn main()
 
     let new_dir = match (args.name, args.list, args.delete, args.add) {
 	(Some(tag), false, false, false) => get_directory(&bkm, tag),
-	(_        , true, false, false)  => list_bookmarks(&bkm),
 	(Some(tag), false, true, false)  => delete_bookmark(&mut bkm, tag),
 	(Some(tag), false, false, true ) => add_bookmark(&mut bkm, tag),
-	_                                => panic!("Ooops it seems that choices are not correct"),
+	// For all other choices list the bookmarks
+	_  => list_bookmarks(&bkm),
     };
 
     match new_dir {
