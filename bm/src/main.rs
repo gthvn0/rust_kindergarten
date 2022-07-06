@@ -84,9 +84,12 @@ fn read_yaml_file(filename: &str) -> Bookmark
     let mut contents = String::new();
     f.read_to_string(&mut contents).expect(concat!("Uname to read ", stringify!(filename)));
 
-    let deserialized: Bookmark = serde_yaml::from_str(&contents).unwrap();
+    let deserialized: Result<Bookmark, _> = serde_yaml::from_str(&contents);
 
-    return deserialized;
+    return match deserialized {
+	Ok(d) => d,
+	Err(_) => Bookmark::new(),
+    };
 }
 
 fn main()
