@@ -26,6 +26,8 @@ cargo new --vcs none bm
 - [X] Implement functions using a YAML file to keep track of bookmarks
   - For example **.bm.yml**.
 - [ ] Fix errors when deleting wrong entry
+- [ ] Fix issues when loading empty bookmark
+- [ ] Add some coloration
 
 ### Usage
 
