@@ -1,3 +1,4 @@
+
 #![allow(unused)]
 
 extern crate yaml_rust;
@@ -37,7 +38,6 @@ fn print_type_of<T>(_: &T) {
 
 fn get_directory(bkm: &yaml_rust::Yaml, key: String) -> String
 {
-    println!("Get directory called with key set to {}", key);
     String::from("/home")
 }
 
