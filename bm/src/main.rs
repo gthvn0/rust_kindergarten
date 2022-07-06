@@ -1,13 +1,20 @@
 #![allow(unused)]
 
 extern crate yaml_rust;
-use yaml_rust::{YamlLoader, YamlEmitter};
 
+use yaml_rust::{YamlLoader, YamlEmitter};
 use clap::Parser;
+
+use std::io::prelude::*;
+use std::fs::File;
 
 #[derive(Parser)]
 #[clap(about)]
 struct Args {
+    /// File that contains the bookmarks
+    #[clap(value_parser)]
+    file: String,
+    
     /// Name of the bookmark to use to change directory
     name: Option<String>,
 
@@ -28,25 +35,25 @@ fn print_type_of<T>(_: &T) {
     println!("{}", std::any::type_name::<T>())
 }
 
-fn get_directory(bkm: &yaml_rust::yaml::Yaml, key: String) -> String
+fn get_directory(bkm: &yaml_rust::Yaml, key: String) -> String
 {
     println!("Get directory called with key set to {}", key);
     String::from("/home")
 }
 
-fn delete_bookmark(bkm: &yaml_rust::yaml::Yaml, key: String) -> String
+fn delete_bookmark(bkm: &yaml_rust::Yaml, key: String) -> String
 {
     println!("Delete called with key set to {}", key);
     String::from(".")
 }
 
-fn add_bookmark(bkm: &yaml_rust::yaml::Yaml, key: String) -> String
+fn add_bookmark(bkm: &yaml_rust::Yaml, key: String) -> String
 {
     println!("Add called with key set to {}", key);
     String::from(".")
 }
 
-fn list_bookmarks(bkm: &yaml_rust::yaml::Yaml) -> String
+fn list_bookmarks(bkm: &yaml_rust::Yaml) -> String
 {
     // Debug support
     println!("List bookmarks called");
@@ -70,23 +77,23 @@ fn list_bookmarks(bkm: &yaml_rust::yaml::Yaml) -> String
     new_bkm
 }
 
+fn read_yaml_file(filename: &str) -> Vec<yaml_rust::Yaml>
+{
+    let mut file = File::open(filename).expect(concat!("Uname to open ", stringify!(filename)));
+    let mut contents = String::new();
+
+    file.read_to_string(&mut contents).expect(concat!("Uname to read ", stringify!(filename)));
+
+    // If we can not load the YAML just panic...
+    YamlLoader::load_from_str(&contents).unwrap()
+}
+
 fn main() {
     let args = Args::parse();
 
-    // First we will need to load the YAML. Let's simulate it
-    // with a variable for now:
-    let bm_yaml =
-	"
-bm: /home/gthvn1/rust_kindergarten/bm
-another: /home/gthvn1/another_dir
-";
-
-    let docs = YamlLoader::load_from_str(bm_yaml).unwrap();
-
-    // Multi document support:
-    //   - bkm is a &yaml_rust::yaml::Yaml
-    let bkm = &docs[0];
-    print_type_of(&bkm);
+    // First we will need to load the YAML. It support multi document
+    // but we only use the first one.
+    let bkm = &read_yaml_file(&args.file)[0];
 
     let result = match (args.name, args.list, args.delete, args.add) {
 	(Some(key), false, false, false) => get_directory(&bkm, key),
