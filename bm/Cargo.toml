@@ -9,4 +9,5 @@ edition = "2021"
 
 [dependencies]
 clap = { version = "3.2.8", features = ["derive"] }
-yaml-rust = "0.4"
+serde = "1.0"
+serde_yaml = "0.8"

@@ -23,9 +23,26 @@ cargo new --vcs none bm
   - `bmr -d <bookmark name>`: delete the bookmark
   - `bmr -a <bookmark name>`: add the current directory as a bookmark named *named*
 - [X] Add a wrapper that will be a shell function to do the **cd**
-- [ ] Implement functions using a YAML file to keep track of bookmarks
+- [X] Implement functions using a YAML file to keep track of bookmarks
   - For example **.bm.yml**.
+- [ ] Fix errors when deleting wrong entry
 
+### Usage
+
+- Install the **bmr**
+- Install the shell wrapper and update paths
+- The path to the bookmarks file is set up in the script
+- Create an empty bookmarks: `echo "---" > /path/to/bm.yaml`
+- Start adding path.
+  - It adds the current path
+  - Example: 
+```
+# bmr -a home
+# bmr -l
+home: /home/gthvn1
+# bmr home
+/home/gthvn1#
+```
 ## Codingame
 
 - Created using:

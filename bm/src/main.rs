@@ -1,11 +1,9 @@
-
 #![allow(unused)]
 
-extern crate yaml_rust;
-
-use yaml_rust::{YamlLoader, YamlEmitter};
 use clap::Parser;
-
+use serde::{Serialize, Deserialize};
+use std::collections::BTreeMap;
+use std::env;
 use std::io::prelude::*;
 use std::fs::File;
 
@@ -15,7 +13,7 @@ struct Args {
     /// File that contains the bookmarks
     #[clap(value_parser)]
     file: String,
-    
+
     /// Name of the bookmark to use to change directory
     name: Option<String>,
 
@@ -32,78 +30,83 @@ struct Args {
     add: bool,
 }
 
+// A bookmark is a tag linked to a path.
+type Bookmark = BTreeMap<String, String>;
+
 fn print_type_of<T>(_: &T) {
     println!("{}", std::any::type_name::<T>())
 }
 
-fn get_directory(bkm: &yaml_rust::Yaml, key: String) -> String
+fn get_directory(bkm: &Bookmark, key: String) -> Option<&String>
 {
-    String::from("/home")
+    return bkm.get(&key).clone();
 }
 
-fn delete_bookmark(bkm: &yaml_rust::Yaml, key: String) -> String
+fn delete_bookmark(bkm: &mut Bookmark, key: String) -> Option<&String>
 {
-    println!("Delete called with key set to {}", key);
-    String::from(".")
+    bkm.remove(&key);
+    return None;
 }
 
-fn add_bookmark(bkm: &yaml_rust::Yaml, key: String) -> String
+fn add_bookmark(bkm: &mut Bookmark, key: String) -> Option<&String>
 {
-    println!("Add called with key set to {}", key);
-    String::from(".")
+    let path = env::current_dir().unwrap();
+
+    bkm.insert(key, path.display().to_string());
+    return None;
 }
 
-fn list_bookmarks(bkm: &yaml_rust::Yaml) -> String
+fn list_bookmarks(bkm: &Bookmark) -> Option<&String>
 {
-    // Debug support
-    println!("List bookmarks called");
-    println!("{:?}", bkm);
+    let mut bkm_string = String::new();
 
-    // Index access for map & array
-    //assert_eq!(doc["foo"][0].as_str().unwrap(), "list1");
-    //assert_eq!(doc["bar"][1].as_f64().unwrap(), 2.0);
-
-    // Chained key/array access is checked and won't panic,
-    // return BadValue if they are not exist.
-    //assert!(doc["INVALID_KEY"][100].is_badvalue());
-
-    // Dump the YAML object
-    let mut new_bkm = String::new();
-    {
-        let mut emitter = YamlEmitter::new(&mut new_bkm);
-        emitter.dump(&bkm).unwrap(); // dump the YAML object to a String
+    for (tag, path) in bkm.iter() {
+	bkm_string = bkm_string + tag + ": " + path + "\n";
     }
 
-    new_bkm
+    println!("{}", bkm_string);
+    // Should return an empty string to avoid unneeded write of bookmarks
+    return None;
 }
 
-fn read_yaml_file(filename: &str) -> Vec<yaml_rust::Yaml>
+fn write_yaml_file(filename: &str, bkm: Bookmark)
 {
-    let mut file = File::open(filename).expect(concat!("Uname to open ", stringify!(filename)));
-    let mut contents = String::new();
+    let mut output = File::create(filename).expect(concat!("Failed to open ", stringify!(filename)));
+    let serialized = serde_yaml::to_string(&bkm).unwrap();
 
-    file.read_to_string(&mut contents).expect(concat!("Uname to read ", stringify!(filename)));
-
-    // If we can not load the YAML just panic...
-    YamlLoader::load_from_str(&contents).unwrap()
+    output.write_all(serialized.as_bytes());
 }
 
-fn main() {
+fn read_yaml_file(filename: &str) -> Bookmark
+{
+    let mut f = File::open(filename).expect(concat!("Uname to open ", stringify!(filename)));
+
+    let mut contents = String::new();
+    f.read_to_string(&mut contents).expect(concat!("Uname to read ", stringify!(filename)));
+
+    let deserialized: Bookmark = serde_yaml::from_str(&contents).unwrap();
+
+    return deserialized;
+}
+
+fn main()
+{
     let args = Args::parse();
 
     // First we will need to load the YAML. It support multi document
     // but we only use the first one.
-    let bkm = &read_yaml_file(&args.file)[0];
+    let mut bkm: Bookmark = read_yaml_file(&args.file);
 
-    let result = match (args.name, args.list, args.delete, args.add) {
-	(Some(key), false, false, false) => get_directory(&bkm, key),
-	(Some(key), false, true, false)  => delete_bookmark(&bkm, key),
-	(Some(key), false, false, true)  => add_bookmark(&bkm, key),
-	// By default we list all bookmarks
-	_                                => list_bookmarks(&bkm),
+    let new_dir = match (args.name, args.list, args.delete, args.add) {
+	(Some(tag), false, false, false) => get_directory(&bkm, tag),
+	(_        , true, false, false)  => list_bookmarks(&bkm),
+	(Some(tag), false, true, false)  => delete_bookmark(&mut bkm, tag),
+	(Some(tag), false, false, true ) => add_bookmark(&mut bkm, tag),
+	_                                => panic!("Ooops it seems that choices are not correct"),
     };
 
-    // It returns the directory to be opened.
-    // NOTE: Delete and add returns the current directory.
-    println!("{}", result);
+    match new_dir {
+	Some(d) => println!("{}", d),
+	_       => write_yaml_file(&args.file, bkm),
+    }
 }
