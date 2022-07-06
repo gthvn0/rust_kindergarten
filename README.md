@@ -8,10 +8,8 @@ My [Rust](https://www.rust-lang.org/) playground
 
 - Create a tool to manage directoris as bookmark.
 - It will return a string that will be the directory to move on.
-  - We will create an alias in the shell to *cd* into the directory
-	- a little trick like: `alias bm='f(){ echo "$1"; cd $(/path/to/bmr);  unset -f f; }; f'`
-	- and adjusting parameters to fit **bmr**
-  - So we renamed the binary **bmr** to avoir confusion
+  - We will create an alias or function in the shell to *cd* into the directory
+  - So we renamed the binary **bmr** to avoid confusion
 
 ### TODO
 
@@ -24,7 +22,9 @@ cargo new --vcs none bm
   - `bmr -l`: list all available bookmarks
   - `bmr -d <bookmark name>`: delete the bookmark
   - `bmr -a <bookmark name>`: add the current directory as a bookmark named *named*
-- [ ] Implement the function using file like for bookmarks **.bm.yml**.
+- [X] Add a wrapper that will be a shell function to do the **cd**
+- [ ] Implement functions using a YAML file to keep track of bookmarks
+  - For example **.bm.yml**.
 
 ## Codingame
 
