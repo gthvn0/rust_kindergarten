@@ -1,6 +1,7 @@
 #![allow(unused)]
 
 use clap::Parser;
+use colored::Colorize;
 use serde::{Serialize, Deserialize};
 use std::collections::BTreeMap;
 use std::env;
@@ -58,13 +59,12 @@ fn add_bookmark(bkm: &mut Bookmark, key: String) -> Option<&String>
 
 fn list_bookmarks(bkm: &Bookmark) -> Option<&String>
 {
-    let mut bkm_string = String::new();
-
     for (tag, path) in bkm.iter() {
-	bkm_string = bkm_string + tag + ": " + path + "\n";
+	println!("{:10}  {} {}",
+		 tag.yellow(),
+		 "-> PATH: ".magenta().bold(), path.magenta());
     }
 
-    println!("{}", bkm_string);
     // Should return an empty string to avoid unneeded write of bookmarks
     return None;
 }

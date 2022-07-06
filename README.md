@@ -27,7 +27,7 @@ cargo new --vcs none bm
   - For example **.bm.yml**.
 - [ ] Fix errors when deleting wrong entry
 - [ ] Fix issues when loading empty bookmark
-- [ ] Add some coloration
+- [X] Add some coloration
 
 ### Usage
 
