@@ -5,7 +5,7 @@
 function bm () {
 
     arg="$@"
-    bmr="/path/to/bmr"
+    bmr="../target/debug/bmr"
 
     if [ "${arg:0:1}" = "-" ]
     then
