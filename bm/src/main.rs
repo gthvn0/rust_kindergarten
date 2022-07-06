@@ -15,6 +15,9 @@ struct Args {
     #[clap(value_parser)]
     file: String,
 
+    /// Command can be "add", "del" or "list"
+    cmd: Option<String>,
+
     /// Name of the bookmark to use to change directory
     name: Option<String>,
 
@@ -100,10 +103,21 @@ fn main()
     // but we only use the first one.
     let mut bkm: Bookmark = read_yaml_file(&args.file);
 
-    let new_dir = match (args.name, args.list, args.delete, args.add) {
-	(Some(tag), false, false, false) => get_directory(&bkm, tag),
-	(Some(tag), false, true, false)  => delete_bookmark(&mut bkm, tag),
-	(Some(tag), false, false, true ) => add_bookmark(&mut bkm, tag),
+    // Extrace the command if any so we can use it in the main match
+    let raw_cmd = match args.cmd {
+	Some(c) => c,
+	_       => "".to_string(),
+    };
+    
+    let new_dir = match (&*raw_cmd, args.name, args.list, args.delete, args.add) {
+	("add", Some(tag), _, _, _) => add_bookmark(&mut bkm, tag),
+	("del", Some(tag), _, _, _) => delete_bookmark(&mut bkm, tag),
+	("list", _ , _, _, _)       => list_bookmarks(&bkm),
+	("", _ , _, _, _)           => list_bookmarks(&bkm),
+	// All other strings are the tag and not a command. So check classic flags.
+	(tag, _, false, false, false) => get_directory(&bkm, tag.to_string()),
+	(tag, _, false, true, false)  => delete_bookmark(&mut bkm, tag.to_string()),
+	(tag, _, false, false, true ) => add_bookmark(&mut bkm, tag.to_string()),
 	// For all other choices list the bookmarks
 	_  => list_bookmarks(&bkm),
     };
