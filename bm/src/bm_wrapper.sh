@@ -21,6 +21,6 @@ function bm () {
     then
 	${BMR} ${BMK_FILE} ${ARGS}
     else
-	cd $(${BMR} ${BMK_FILE} ${ARGS})
+	pushd $(${BMR} ${BMK_FILE} ${ARGS})
     fi
 }
