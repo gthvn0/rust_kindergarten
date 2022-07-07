@@ -22,6 +22,7 @@
  *
  * Possible gates are: AND, OR, XOR, NAND, NOR, NXOR
  */
+use std::iter::zip;
 
 mod gate {
     // Keep this one private for now
@@ -67,6 +68,17 @@ mod gate {
     }
 }
 
+/*
+ * To generate a new signal we take to signals as input that
+ * are strings, we generate a tuple by zipping then and apply
+ * the corresponding gate by mapping it. The macro is generating
+ * a new iterator that contains the new signal.
+ */
+
+fn gen_signal(s1: &String, s2: &String, op: fn(char, char) -> char) -> String {
+    zip(s1.chars(), s2.chars()).map(|(x, y)| op(x, y)).collect()
+}
+
 fn main() {
     let _input1_name: String = String::from("A");
     let _input1_signal: String = String::from("__---___---___---___---___");
@@ -78,6 +90,10 @@ fn main() {
     let _output_input2: String = String::from("B");
 
     assert!(gate::and('_', '-') == '_');
+    assert!(gate::and('-', '_') == '_');
+    assert!(gate::and('_', '_') == '_');
+    assert!(gate::and('-', '-') == '-');
+
     assert!(gate::or('-', '_') == '-');
     assert!(gate::xor('-', '-') == '_');
     assert!(gate::xor('-', '_') == '-');
@@ -85,5 +101,10 @@ fn main() {
     assert!(gate::nor('-', '_') == '_');
     assert!(gate::nxor('-', '_') == '_');
 
-    println!("done");
+    let new_sig = gen_signal(&_input1_signal, &_input2_signal, gate::and);
+
+    println!("    {}", _input1_signal);
+    println!("AND");
+    println!("    {}", _input2_signal);
+    println!("==> {}", new_sig);
 }
