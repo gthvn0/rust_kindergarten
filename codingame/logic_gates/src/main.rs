@@ -22,6 +22,7 @@
  *
  * Possible gates are: AND, OR, XOR, NAND, NOR, NXOR
  */
+use std::collections::HashMap;
 use std::iter::zip;
 
 mod gate {
@@ -75,36 +76,64 @@ mod gate {
  * a new iterator that contains the new signal.
  */
 
-fn gen_signal(s1: &String, s2: &String, op: fn(char, char) -> char) -> String {
+fn gen_signal(s1: &str, s2: &str, op: fn(char, char) -> char) -> String {
     zip(s1.chars(), s2.chars()).map(|(x, y)| op(x, y)).collect()
 }
 
+fn print_signal(h: &HashMap<String, String>, key: &String) {
+    match h.get(key) {
+        Some(s) => println!("{}: {}", key, s),
+        _ => println!("No signal found"),
+    }
+}
+
+fn print_gen_signal(
+    h: &HashMap<String, String>,
+    s1: &String,
+    s2: &String,
+    op: fn(char, char) -> char,
+) {
+    match (h.get(s1), h.get(s2)) {
+        (Some(s1), Some(s2)) => println!("S: {}", gen_signal(s1, s2, op)),
+        _ => panic!("Signals not found"),
+    }
+}
+
+#[macro_export]
+macro_rules! generate_signal {
+    ($h:expr, $in1: expr, $in2: expr, $ops: expr, $opf: expr) => {
+        println!("");
+        print_signal($h, $in1);
+        println!("{}", $ops);
+        print_signal($h, $in2);
+        println!("==");
+        print_gen_signal($h, $in1, $in2, $opf);
+    };
+}
+
 fn main() {
-    let _input1_name: String = String::from("A");
-    let _input1_signal: String = String::from("__---___---___---___---___");
-    let _input2_name: String = String::from("B");
-    let _input2_signal: String = String::from("____---___---___---___---_");
-    let _output_name: String = String::from("C");
-    let _output_type: String = String::from("AND");
-    let _output_input1: String = String::from("A");
-    let _output_input2: String = String::from("B");
+    let mut signals: HashMap<String, String> = HashMap::new();
 
-    assert!(gate::and('_', '-') == '_');
-    assert!(gate::and('-', '_') == '_');
-    assert!(gate::and('_', '_') == '_');
-    assert!(gate::and('-', '-') == '-');
+    signals.insert(
+        String::from("A"),
+        String::from("__---___---___---___---___"),
+    );
+    signals.insert(
+        String::from("B"),
+        String::from("____---___---___---___---_"),
+    );
 
-    assert!(gate::or('-', '_') == '-');
-    assert!(gate::xor('-', '-') == '_');
-    assert!(gate::xor('-', '_') == '-');
-    assert!(gate::nand('-', '-') == '_');
-    assert!(gate::nor('-', '_') == '_');
-    assert!(gate::nxor('-', '_') == '_');
+    println!("Inputs signals are:");
+    print_signal(&signals, &String::from("A"));
+    print_signal(&signals, &String::from("B"));
 
-    let new_sig = gen_signal(&_input1_signal, &_input2_signal, gate::and);
+    let in1: String = String::from("A");
+    let in2: String = String::from("B");
 
-    println!("    {}", _input1_signal);
-    println!("AND");
-    println!("    {}", _input2_signal);
-    println!("==> {}", new_sig);
+    generate_signal!(&signals, &in1, &in2, "AND", gate::and);
+    generate_signal!(&signals, &in1, &in2, "OR", gate::or);
+    generate_signal!(&signals, &in1, &in2, "XOR", gate::xor);
+    generate_signal!(&signals, &in1, &in2, "NAND", gate::nand);
+    generate_signal!(&signals, &in1, &in2, "NOR", gate::nor);
+    generate_signal!(&signals, &in1, &in2, "NXOR", gate::nxor);
 }
