@@ -23,9 +23,39 @@
  * Possible gates are: AND, OR, XOR, NAND, NOR, NXOR
  */
 use std::collections::HashMap;
-use std::iter::zip;
 
 mod gate {
+    use std::iter::zip;
+
+    pub enum Type {
+        AND,
+        OR,
+        XOR,
+        NAND,
+        NOR,
+        NXOR,
+    }
+
+    /*
+     * To generate a new signal we take to signals as input that
+     * are strings, we generate a tuple by zipping then and apply
+     * the corresponding gate by mapping it. The macro is generating
+     * a new iterator that contains the new signal.
+     */
+
+    pub fn gen_signal(s1: &str, s2: &str, gate_type: Type) -> String {
+        let op: fn(char, char) -> char = match gate_type {
+            Type::AND => and,
+            Type::OR => or,
+            Type::XOR => xor,
+            Type::NAND => nand,
+            Type::NOR => nor,
+            Type::NXOR => nxor,
+        };
+
+        zip(s1.chars(), s2.chars()).map(|(x, y)| op(x, y)).collect()
+    }
+
     // Keep this one private for now
     fn not(a: char) -> char {
         match a {
@@ -34,21 +64,21 @@ mod gate {
         }
     }
 
-    pub fn and(a: char, b: char) -> char {
+    fn and(a: char, b: char) -> char {
         match (a, b) {
             ('-', '-') => '-',
             _ => '_',
         }
     }
 
-    pub fn or(a: char, b: char) -> char {
+    fn or(a: char, b: char) -> char {
         match (a, b) {
             ('_', '_') => '_',
             _ => '-',
         }
     }
 
-    pub fn xor(a: char, b: char) -> char {
+    fn xor(a: char, b: char) -> char {
         match (a, b) {
             ('_', '_') => '_',
             ('-', '-') => '_',
@@ -56,37 +86,17 @@ mod gate {
         }
     }
 
-    pub fn nand(a: char, b: char) -> char {
+    fn nand(a: char, b: char) -> char {
         not(and(a, b))
     }
 
-    pub fn nor(a: char, b: char) -> char {
+    fn nor(a: char, b: char) -> char {
         not(or(a, b))
     }
 
-    pub fn nxor(a: char, b: char) -> char {
+    fn nxor(a: char, b: char) -> char {
         not(xor(a, b))
     }
-}
-
-enum GateType {
-    AND,
-    OR,
-    XOR,
-    NAND,
-    NOR,
-    NXOR,
-}
-
-/*
- * To generate a new signal we take to signals as input that
- * are strings, we generate a tuple by zipping then and apply
- * the corresponding gate by mapping it. The macro is generating
- * a new iterator that contains the new signal.
- */
-
-fn gen_signal(s1: &str, s2: &str, op: fn(char, char) -> char) -> String {
-    zip(s1.chars(), s2.chars()).map(|(x, y)| op(x, y)).collect()
 }
 
 fn print_signal(h: &HashMap<String, String>, key: &String) {
@@ -96,14 +106,9 @@ fn print_signal(h: &HashMap<String, String>, key: &String) {
     }
 }
 
-fn print_gen_signal(
-    h: &HashMap<String, String>,
-    s1: &String,
-    s2: &String,
-    op: fn(char, char) -> char,
-) {
+fn print_gen_signal(h: &HashMap<String, String>, s1: &String, s2: &String, op: gate::Type) {
     match (h.get(s1), h.get(s2)) {
-        (Some(s1), Some(s2)) => println!("S: {}", gen_signal(s1, s2, op)),
+        (Some(s1), Some(s2)) => println!("S: {}", gate::gen_signal(s1, s2, op)),
         _ => panic!("Signals not found"),
     }
 }
@@ -111,21 +116,21 @@ fn print_gen_signal(
 #[macro_export]
 macro_rules! generate_signal {
     ($h:expr, $in1: expr, $in2: expr, $gate: expr) => {
-        let (ops, opf): (&str, fn(char, char) -> char) = match $gate {
-            GateType::AND => ("AND", gate::and),
-            GateType::OR => ("OR", gate::or),
-            GateType::XOR => ("XOR", gate::xor),
-            GateType::NAND => ("NAND", gate::nand),
-            GateType::NOR => ("NOR", gate::nor),
-            GateType::NXOR => ("NXOR", gate::nxor),
+        let op_str = match $gate {
+            gate::Type::AND => "AND",
+            gate::Type::OR => "OR",
+            gate::Type::XOR => "XOR",
+            gate::Type::NAND => "NAND",
+            gate::Type::NOR => "NOR",
+            gate::Type::NXOR => "NXOR",
         };
 
         println!("");
         print_signal($h, $in1);
-        println!("{}", ops);
+        println!("{}", op_str);
         print_signal($h, $in2);
         println!("==");
-        print_gen_signal($h, $in1, $in2, opf);
+        print_gen_signal($h, $in1, $in2, $gate);
     };
 }
 
@@ -148,10 +153,10 @@ fn main() {
     let in1: String = String::from("A");
     let in2: String = String::from("B");
 
-    generate_signal!(&signals, &in1, &in2, GateType::AND);
-    generate_signal!(&signals, &in1, &in2, GateType::OR);
-    generate_signal!(&signals, &in1, &in2, GateType::XOR);
-    generate_signal!(&signals, &in1, &in2, GateType::NAND);
-    generate_signal!(&signals, &in1, &in2, GateType::NOR);
-    generate_signal!(&signals, &in1, &in2, GateType::NXOR);
+    generate_signal!(&signals, &in1, &in2, gate::Type::AND);
+    generate_signal!(&signals, &in1, &in2, gate::Type::OR);
+    generate_signal!(&signals, &in1, &in2, gate::Type::XOR);
+    generate_signal!(&signals, &in1, &in2, gate::Type::NAND);
+    generate_signal!(&signals, &in1, &in2, gate::Type::NOR);
+    generate_signal!(&signals, &in1, &in2, gate::Type::NXOR);
 }
