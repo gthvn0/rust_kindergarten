@@ -69,6 +69,15 @@ mod gate {
     }
 }
 
+enum GateType {
+    AND,
+    OR,
+    XOR,
+    NAND,
+    NOR,
+    NXOR,
+}
+
 /*
  * To generate a new signal we take to signals as input that
  * are strings, we generate a tuple by zipping then and apply
@@ -101,13 +110,22 @@ fn print_gen_signal(
 
 #[macro_export]
 macro_rules! generate_signal {
-    ($h:expr, $in1: expr, $in2: expr, $ops: expr, $opf: expr) => {
+    ($h:expr, $in1: expr, $in2: expr, $gate: expr) => {
+        let (ops, opf): (&str, fn(char, char) -> char) = match $gate {
+            GateType::AND => ("AND", gate::and),
+            GateType::OR => ("OR", gate::or),
+            GateType::XOR => ("XOR", gate::xor),
+            GateType::NAND => ("NAND", gate::nand),
+            GateType::NOR => ("NOR", gate::nor),
+            GateType::NXOR => ("NXOR", gate::nxor),
+        };
+
         println!("");
         print_signal($h, $in1);
-        println!("{}", $ops);
+        println!("{}", ops);
         print_signal($h, $in2);
         println!("==");
-        print_gen_signal($h, $in1, $in2, $opf);
+        print_gen_signal($h, $in1, $in2, opf);
     };
 }
 
@@ -130,10 +148,10 @@ fn main() {
     let in1: String = String::from("A");
     let in2: String = String::from("B");
 
-    generate_signal!(&signals, &in1, &in2, "AND", gate::and);
-    generate_signal!(&signals, &in1, &in2, "OR", gate::or);
-    generate_signal!(&signals, &in1, &in2, "XOR", gate::xor);
-    generate_signal!(&signals, &in1, &in2, "NAND", gate::nand);
-    generate_signal!(&signals, &in1, &in2, "NOR", gate::nor);
-    generate_signal!(&signals, &in1, &in2, "NXOR", gate::nxor);
+    generate_signal!(&signals, &in1, &in2, GateType::AND);
+    generate_signal!(&signals, &in1, &in2, GateType::OR);
+    generate_signal!(&signals, &in1, &in2, GateType::XOR);
+    generate_signal!(&signals, &in1, &in2, GateType::NAND);
+    generate_signal!(&signals, &in1, &in2, GateType::NOR);
+    generate_signal!(&signals, &in1, &in2, GateType::NXOR);
 }
