@@ -1,88 +1,91 @@
-use std::io;
+#[derive(Debug)]
+enum Token {
+    PO,
+    PF,
+    CO,
+    CF,
+    R(f32),
+}
 
-macro_rules! parse_input {
-    ($x:expr, $t:ident) => {
-        $x.trim().parse::<$t>().unwrap()
+fn next_token(e: &[Token]) -> Option<Token> {
+    if e.is_empty() {
+        return None;
+    }
+
+    return match e[0] {
+        Token::PO => Some(Token::PO),
+        Token::PF => Some(Token::PF),
+        Token::CO => Some(Token::CO),
+        Token::CF => Some(Token::CF),
+        Token::R(x) => Some(Token::R(x)),
     };
 }
 
-/**
- * Tokens: '(', ')', '[', ']', Id
- *
- *     E -> S E | P E | R
- *     S -> ( E )
- *     P -> [ E ]
- *     R -> Id
- *
- * [ ( A B ) [ C A ] ]
- *
- *                E -> S + 1/P => (A + B) + 1/(1/C + 1/A)
- *               / \
- *              /   \
- *   A + B <-  S     P -> 1/C + 1/A
- *            / \   / \
- *           A  B  C   A
- *
- * [ A B C ], A=12, B=4, C=9 => 2.25
- *
- *       E -> 1/( 1/A + 1/B + 1/C)
- *       |
- *       P -> 1/A + (1/B + 1/C)
- *      / \
- *     /   P -> 1/B + 1/C
- *    A   / \
- *       B   C
- *
- *   
- */
-
-/**
- * Auto-generated code below aims at helping you parse
- * the standard input according to the problem statement.
- **/
-fn main() {
-    let mut input_line = String::new();
-    io::stdin().read_line(&mut input_line).unwrap();
-    let n = parse_input!(input_line, i32);
-
-    for i in 0..n as usize {
-        let mut input_line = String::new();
-        io::stdin().read_line(&mut input_line).unwrap();
-        let inputs = input_line.split(" ").collect::<Vec<_>>();
-        let name = inputs[0].trim().to_string();
-        let r = parse_input!(inputs[1], i32);
+fn parallel(e: &[Token]) -> f32 {
+    match next_token(e) {
+        Some(Token::CF) => 0.0 + parse(&e[1..]),
+        Some(Token::CO) => 1.0 / parallel(&e[1..]),
+        Some(Token::PF) => 0.0 + parse(&e[1..]),
+        Some(Token::PO) => serie(&e[1..]),
+        Some(Token::R(x)) => (1.0 / x) + parallel(&e[1..]),
+        _ => panic!("WTF"),
     }
+}
 
-    let mut input_line = String::new();
-    io::stdin().read_line(&mut input_line).unwrap();
-    let circuit = input_line.trim_matches('\n').to_string();
+fn serie(e: &[Token]) -> f32 {
+    match next_token(e) {
+        Some(Token::PF) => 0.0 + parse(&e[1..]),
+        Some(Token::PO) => serie(&e[1..]),
+        Some(Token::CF) => 0.0 + parse(&e[1..]),
+        Some(Token::CO) => 1.0 / parallel(&e[1..]),
+        Some(Token::R(x)) => x + serie(&e[1..]),
+        _ => panic!("WTF"),
+    }
+}
 
-    // Write an answer using println!("message...");
-    // To debug: eprintln!("Debug message...");
-    // Example:
-    // 3
-    // A 24
-    // B 8
-    // C 48
+fn parse(e: &[Token]) -> f32 {
+    match next_token(e) {
+        Some(Token::CO) => 1.0 / parallel(&e[1..]),
+        Some(Token::PO) => serie(&e[1..]),
+        Some(Token::CF) => 0.0 + parse(&e[1..]),
+        Some(Token::PF) => 0.0 + parse(&e[1..]),
+        None => 0.0,
+        _ => {
+            println!("Token {:?} not expected here", e);
+            0.0
+        }
+    }
+}
+
+fn main() {
+    //A 24
+    //B 8
+    //C 48
+    // This will look something like this:
     //
-    // ==> Should return 10.7
-
-    // ==> Equivalent to
-    //
-    //     +---[C]---+
-    //     |         |
-    //  +--+         +--+
-    //  |  |         |  |
-    //  |  +---[A]---+  |
-    //  |               |
-    //  +---[A]---[B]---+
-    //  |               |
-    //  +---[Battery]---+
+    //        +---[C]---+
+    //        |         |
+    //     +--+         +--+
+    //     |  |         |  |
+    //     |  +---[A]---+  |
+    //     |               |
+    //     +---[A]---[B]---+
+    //     |               |
+    //     +---[Battery]---+
     //
     // [ ( A B ) [ C A ] ] => [ 24+8 1/(1/48+1/24) ] => [ 32 16 ] => 1/(1/32+1/16) => 32/3 => 10.666... => 10.7
-    //
-    eprintln!("---[ Debug ]---");
-    eprintln!("circuit: {}", circuit);
+    let e2: [Token; 10] = [
+        Token::CO,
+        Token::PO,
+        Token::R(24.0),
+        Token::R(8.0),
+        Token::PF,
+        Token::CO,
+        Token::R(48.0),
+        Token::R(24.0),
+        Token::CF,
+        Token::CF,
+    ];
 
-    println!("Equivalent Resistance");
+    println!("R: {}", parse(&e2[..]));
 }
