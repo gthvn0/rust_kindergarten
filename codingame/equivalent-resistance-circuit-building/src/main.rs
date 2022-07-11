@@ -4,7 +4,6 @@ use std::collections::HashMap;
 #[derive(Debug)]
 struct Resistance {
     kind: RType,
-    depth: i32,
     value: f32,
 }
 
@@ -14,139 +13,51 @@ enum RType {
     Parallel,
 }
 
-fn start_serie(s: &mut Vec<Resistance>) {
-    match s.pop() {
-        None => s.push(Resistance {
-            kind: RType::Serie,
-            depth: 1,
-            value: 0.0,
-        }),
-        Some(v) => {
-            if v.kind == RType::Serie {
-                s.push(Resistance {
-                    kind: RType::Serie,
-                    depth: v.depth + 1,
-                    value: v.value,
-                });
-            } else {
-                s.push(v);
-                s.push(Resistance {
-                    kind: RType::Serie,
-                    depth: 1,
-                    value: 0.0,
-                });
-            }
-        }
-    }
+fn push_serie(s: &mut Vec<Resistance>) {
+    s.push(Resistance {
+        kind: RType::Serie,
+        value: 0.0,
+    });
 }
 
-fn start_parallel(s: &mut Vec<Resistance>) {
-    match s.pop() {
-        None => s.push(Resistance {
-            kind: RType::Parallel,
-            depth: 1,
-            value: 0.0,
-        }),
-        Some(v) => {
-            if v.kind == RType::Parallel {
-                s.push(Resistance {
-                    kind: RType::Parallel,
-                    depth: v.depth + 1,
-                    value: v.value,
-                });
-            } else {
-                s.push(v);
-                s.push(Resistance {
-                    kind: RType::Parallel,
-                    depth: 1,
-                    value: 0.0,
-                });
-            }
-        }
-    }
+fn push_parallel(s: &mut Vec<Resistance>) {
+    s.push(Resistance {
+        kind: RType::Parallel,
+        value: 0.0,
+    });
 }
 
-fn end_serie(s: &mut Vec<Resistance>) {
+fn pop_resistance(s: &mut Vec<Resistance>) {
     match s.pop() {
-        None => panic!("Something goes wrong"),
+        None => panic!("Something goes wrong you should have a least one serie in progress"),
         Some(v) => {
-            eprintln!("v == {:?}", v);
-            if v.kind == RType::Serie {
-                if v.depth == 1 {
-                    // On doit basculer la valeur dans l'element du dessous
-                    match s.pop() {
-                        None => s.push(Resistance {
-                            kind: v.kind,
-                            depth: 0,
-                            value: v.value,
-                        }),
-                        Some(down) => {
-                            let new_value: f32 = if down.kind == RType::Serie {
-                                down.value + v.value
-                            } else {
-                                down.value + (1.0 / v.value)
-                            };
-                            s.push(Resistance {
-                                kind: down.kind,
-                                depth: down.depth,
-                                value: new_value,
-                            });
-                        }
-                    }
-                } else if v.depth > 1 {
+            // On doit basculer la valeur dans l'element du dessous
+            //
+            match s.pop() {
+                // Si on est le dernier item on va inverser dans le cas des resistances
+                // en paralleles.
+                None => {
+                    let new_value = if v.kind == RType::Parallel {
+                        1.0 / v.value
+                    } else {
+                        v.value
+                    };
                     s.push(Resistance {
-                        kind: RType::Serie,
-                        depth: v.depth - 1,
-                        value: v.value,
-                    });
-                } else {
-                    panic!("v.depth shouldn't be < 1");
+                        kind: v.kind,
+                        value: new_value,
+                    })
                 }
-            } else {
-                panic!("Top element should be serie");
-            }
-        }
-    }
-}
-
-fn end_parallel(s: &mut Vec<Resistance>) {
-    match s.pop() {
-        None => panic!("Something goes wrong"),
-        Some(v) => {
-            eprintln!("v == {:?}", v);
-            if v.kind == RType::Parallel {
-                if v.depth == 1 {
-                    // On doit basculer la valeur dans l'element du dessous
-                    match s.pop() {
-                        None => s.push(Resistance {
-                            kind: v.kind,
-                            depth: 0,
-                            value: 1.0 / v.value,
-                        }),
-                        Some(down) => {
-                            let new_value: f32 = if down.kind == RType::Serie {
-                                down.value + v.value
-                            } else {
-                                down.value + (1.0 / v.value)
-                            };
-                            s.push(Resistance {
-                                kind: down.kind,
-                                depth: down.depth,
-                                value: new_value,
-                            });
-                        }
-                    }
-                } else if v.depth > 1 {
+                Some(down) => {
+                    let new_value = if down.kind != v.kind {
+                        down.value + (1.0 / v.value)
+                    } else {
+                        down.value + v.value
+                    };
                     s.push(Resistance {
-                        kind: RType::Parallel,
-                        depth: v.depth - 1,
-                        value: v.value,
+                        kind: down.kind,
+                        value: new_value,
                     });
-                } else {
-                    panic!("v.depth shouldn't be < 1");
                 }
-            } else {
-                panic!("Top element should be parallel");
             }
         }
     }
@@ -159,10 +70,10 @@ fn evaluate(vt: Vec<Token>, rv: &HashMap<&str, f32>) -> f32 {
     for tok in vt {
         //eprintln!("Token {:?}", tok);
         match tok {
-            Token::Po => start_serie(&mut stack),
-            Token::Pc => end_serie(&mut stack),
-            Token::Bo => start_parallel(&mut stack),
-            Token::Bc => end_parallel(&mut stack),
+            Token::Po => push_serie(&mut stack),
+            Token::Bo => push_parallel(&mut stack),
+            Token::Pc => pop_resistance(&mut stack),
+            Token::Bc => pop_resistance(&mut stack),
             Token::Id(id) => {
                 // Get the resistance of the value
                 match rv.get(id) {
@@ -177,7 +88,6 @@ fn evaluate(vt: Vec<Token>, rv: &HashMap<&str, f32>) -> f32 {
                         eprintln!("   > Pushing {}", new_val);
                         stack.push(Resistance {
                             kind: elmt.kind,
-                            depth: elmt.depth,
                             value: new_val,
                         });
                     }
@@ -220,27 +130,43 @@ fn tokenize(input: &str) -> Vec<Token> {
     v
 }
 
-fn main() {
+#[test]
+fn test_serie_easy() {
+    let mut resistance_value: HashMap<&str, f32> = HashMap::new();
+
+    resistance_value.insert(&"A", 24.0);
+    resistance_value.insert(&"B", 8.0);
+
+    assert_eq!(32.0, evaluate(tokenize(&"( A B )"), &resistance_value));
+}
+
+#[test]
+fn test_parallel_easy() {
+    let mut resistance_value: HashMap<&str, f32> = HashMap::new();
+
+    resistance_value.insert(&"A", 24.0);
+    resistance_value.insert(&"B", 8.0);
+
+    assert_eq!(6.0, evaluate(tokenize(&"[ A B ]"), &resistance_value));
+}
+
+#[test]
+fn test_serie_in_parallel() {
     let mut resistance_value: HashMap<&str, f32> = HashMap::new();
 
     resistance_value.insert(&"A", 24.0);
     resistance_value.insert(&"B", 8.0);
     resistance_value.insert(&"C", 48.0);
-    resistance_value.insert(&"D", 20.0);
-    resistance_value.insert(&"E", 25.0);
 
-    println!(
-        " >>>> {} \n\n",
-        evaluate(tokenize(&"( A B )"), &resistance_value)
-    );
-    println!(
-        " >>>> {} \n\n",
-        evaluate(tokenize(&"[ D E ]"), &resistance_value)
-    );
-    println!(
-        " >>>> {} \n\n",
+    assert_eq!(
+        10.666667,
         evaluate(tokenize(&"[ ( A B ) [ C A ] ]"), &resistance_value)
     );
+}
+
+#[test]
+fn complex_alpha() {
+    let mut resistance_value: HashMap<&str, f32> = HashMap::new();
 
     /*
      * This complex one is not working: Trouvé : 2.0 Attendu : 2.4
@@ -261,10 +187,17 @@ fn main() {
     resistance_value.insert(&"Foxtrot", 10.0);
     resistance_value.insert(&"Golf", 8.0);
 
-    let vtoks: Vec<Token> =
-        tokenize(&"( Alfa [ Charlie Delta ( Bravo [ Echo ( Foxtrot Golf ) ] ) ] )");
-    println!(" >>>> {}\n\n", evaluate(vtoks, &resistance_value));
+    assert_eq!(
+        2.4,
+        evaluate(
+            tokenize(&"( Alfa [ Charlie Delta ( Bravo [ Echo ( Foxtrot Golf ) ] ) ] )"),
+            &resistance_value
+        )
+    );
+}
 
+#[test]
+fn complex_alef() {
     /* This one not working
      * name: Alef, r: 30
      * name: Bet, r: 20
@@ -274,16 +207,23 @@ fn main() {
      * Trouvé : 30.1
      * Attendu : 45.0
      */
+    let mut resistance_value: HashMap<&str, f32> = HashMap::new();
+
     resistance_value.insert(&"Alef", 1.0);
     resistance_value.insert(&"Bet", 1.0);
     resistance_value.insert(&"Vet", 12.0);
-    println!(
-        " >>>> {}\n\n",
+    assert_eq!(
+        45.0,
         evaluate(
             tokenize(&"( Alef [ ( Bet Bet Bet ) ( Vet [ ( Vet Vet ) ( Vet [ Bet Bet ] ) ] ) ] )"),
             &resistance_value
         )
     );
+}
+
+#[test]
+fn complex_star() {
+    let mut resistance_value: HashMap<&str, f32> = HashMap::new();
 
     /* And also this one
      * name: Star, r: 78
@@ -293,5 +233,12 @@ fn main() {
      * Attendu : 91.0
      */
     resistance_value.insert(&"Star", 78.0);
-    println!(" >>>> {}\n\n", evaluate(tokenize(&"[ ( [ Star ( Star Star ) ] [ Star ( Star Star ) ] Star ) ( [ Star ( Star Star ) ] [ Star ( Star Star ) ] Star ) ]"), &resistance_value));
+    assert_eq!(
+        91.0,
+        evaluate(tokenize(&"[ ( [ Star ( Star Star ) ] [ Star ( Star Star ) ] Star ) ( [ Star ( Star Star ) ] [ Star ( Star Star ) ] Star ) ]"),
+        &resistance_value));
+}
+
+fn main() {
+    println!("Hello");
 }
