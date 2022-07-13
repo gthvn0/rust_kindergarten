@@ -188,7 +188,7 @@ fn complex_alpha() {
     resistance_value.insert("Golf".to_string(), 8.0);
 
     assert_eq!(
-        2.4,
+        2.448276,
         evaluate(
             tokenize(&"( Alfa [ Charlie Delta ( Bravo [ Echo ( Foxtrot Golf ) ] ) ] )"),
             &resistance_value
@@ -198,20 +198,17 @@ fn complex_alpha() {
 
 #[test]
 fn complex_alef() {
-    /* This one not working
+    /*
      * name: Alef, r: 30
      * name: Bet, r: 20
      * name: Vet, r: 10
      * circuit: ( Alef [ ( Bet Bet Bet ) ( Vet [ ( Vet Vet ) ( Vet [ Bet Bet ] ) ] ) ] )
-     *
-     * Trouvé : 30.1
-     * Attendu : 45.0
      */
     let mut resistance_value: HashMap<String, f32> = HashMap::new();
 
-    resistance_value.insert("Alef".to_string(), 1.0);
-    resistance_value.insert("Bet".to_string(), 1.0);
-    resistance_value.insert("Vet".to_string(), 12.0);
+    resistance_value.insert("Alef".to_string(), 30.0);
+    resistance_value.insert("Bet".to_string(), 20.0);
+    resistance_value.insert("Vet".to_string(), 10.0);
     assert_eq!(
         45.0,
         evaluate(
@@ -225,12 +222,9 @@ fn complex_alef() {
 fn complex_star() {
     let mut resistance_value: HashMap<String, f32> = HashMap::new();
 
-    /* And also this one
+    /*
      * name: Star, r: 78
      * circuit: [ ( [ Star ( Star Star ) ] [ Star ( Star Star ) ] Star ) ( [ Star ( Star Star ) ] [ Star ( Star Star ) ] Star ) ]
-     *
-     * Trouvé : 39.0
-     * Attendu : 91.0
      */
     resistance_value.insert("Star".to_string(), 78.0);
     assert_eq!(
