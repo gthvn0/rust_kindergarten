@@ -64,7 +64,7 @@ fn pop_resistance(s: &mut Vec<Resistance>) {
 }
 
 #[allow(unused_variables)]
-fn evaluate(vt: Vec<Token>, rv: &HashMap<&str, f32>) -> f32 {
+fn evaluate(vt: Vec<Token>, rv: &HashMap<String, f32>) -> f32 {
     let mut stack: Vec<Resistance> = Vec::new();
 
     for tok in vt {
@@ -132,31 +132,31 @@ fn tokenize(input: &str) -> Vec<Token> {
 
 #[test]
 fn test_serie_easy() {
-    let mut resistance_value: HashMap<&str, f32> = HashMap::new();
+    let mut resistance_value: HashMap<String, f32> = HashMap::new();
 
-    resistance_value.insert(&"A", 24.0);
-    resistance_value.insert(&"B", 8.0);
+    resistance_value.insert("A".to_string(), 24.0);
+    resistance_value.insert("B".to_string(), 8.0);
 
     assert_eq!(32.0, evaluate(tokenize(&"( A B )"), &resistance_value));
 }
 
 #[test]
 fn test_parallel_easy() {
-    let mut resistance_value: HashMap<&str, f32> = HashMap::new();
+    let mut resistance_value: HashMap<String, f32> = HashMap::new();
 
-    resistance_value.insert(&"A", 24.0);
-    resistance_value.insert(&"B", 8.0);
+    resistance_value.insert("A".to_string(), 24.0);
+    resistance_value.insert("B".to_string(), 8.0);
 
     assert_eq!(6.0, evaluate(tokenize(&"[ A B ]"), &resistance_value));
 }
 
 #[test]
 fn test_serie_in_parallel() {
-    let mut resistance_value: HashMap<&str, f32> = HashMap::new();
+    let mut resistance_value: HashMap<String, f32> = HashMap::new();
 
-    resistance_value.insert(&"A", 24.0);
-    resistance_value.insert(&"B", 8.0);
-    resistance_value.insert(&"C", 48.0);
+    resistance_value.insert("A".to_string(), 24.0);
+    resistance_value.insert("B".to_string(), 8.0);
+    resistance_value.insert("C".to_string(), 48.0);
 
     assert_eq!(
         10.666667,
@@ -166,7 +166,7 @@ fn test_serie_in_parallel() {
 
 #[test]
 fn complex_alpha() {
-    let mut resistance_value: HashMap<&str, f32> = HashMap::new();
+    let mut resistance_value: HashMap<String, f32> = HashMap::new();
 
     /*
      * This complex one is not working: Trouvé : 2.0 Attendu : 2.4
@@ -179,13 +179,13 @@ fn complex_alpha() {
      * name: Foxtrot, r: 10
      * name: Golf, r: 8
      */
-    resistance_value.insert(&"Alfa", 1.0);
-    resistance_value.insert(&"Bravo", 1.0);
-    resistance_value.insert(&"Charlie", 12.0);
-    resistance_value.insert(&"Delta", 4.0);
-    resistance_value.insert(&"Echo", 2.0);
-    resistance_value.insert(&"Foxtrot", 10.0);
-    resistance_value.insert(&"Golf", 8.0);
+    resistance_value.insert("Alfa".to_string(), 1.0);
+    resistance_value.insert("Bravo".to_string(), 1.0);
+    resistance_value.insert("Charlie".to_string(), 12.0);
+    resistance_value.insert("Delta".to_string(), 4.0);
+    resistance_value.insert("Echo".to_string(), 2.0);
+    resistance_value.insert("Foxtrot".to_string(), 10.0);
+    resistance_value.insert("Golf".to_string(), 8.0);
 
     assert_eq!(
         2.4,
@@ -207,11 +207,11 @@ fn complex_alef() {
      * Trouvé : 30.1
      * Attendu : 45.0
      */
-    let mut resistance_value: HashMap<&str, f32> = HashMap::new();
+    let mut resistance_value: HashMap<String, f32> = HashMap::new();
 
-    resistance_value.insert(&"Alef", 1.0);
-    resistance_value.insert(&"Bet", 1.0);
-    resistance_value.insert(&"Vet", 12.0);
+    resistance_value.insert("Alef".to_string(), 1.0);
+    resistance_value.insert("Bet".to_string(), 1.0);
+    resistance_value.insert("Vet".to_string(), 12.0);
     assert_eq!(
         45.0,
         evaluate(
@@ -223,7 +223,7 @@ fn complex_alef() {
 
 #[test]
 fn complex_star() {
-    let mut resistance_value: HashMap<&str, f32> = HashMap::new();
+    let mut resistance_value: HashMap<String, f32> = HashMap::new();
 
     /* And also this one
      * name: Star, r: 78
@@ -232,7 +232,7 @@ fn complex_star() {
      * Trouvé : 39.0
      * Attendu : 91.0
      */
-    resistance_value.insert(&"Star", 78.0);
+    resistance_value.insert("Star".to_string(), 78.0);
     assert_eq!(
         91.0,
         evaluate(tokenize(&"[ ( [ Star ( Star Star ) ] [ Star ( Star Star ) ] Star ) ( [ Star ( Star Star ) ] [ Star ( Star Star ) ] Star ) ]"),
@@ -240,5 +240,18 @@ fn complex_star() {
 }
 
 fn main() {
-    println!("Hello");
+    let mut resistance_value: HashMap<String, f32> = HashMap::new();
+
+    /* And also this one
+     * name: Star, r: 78
+     * circuit: [ ( [ Star ( Star Star ) ] [ Star ( Star Star ) ] Star ) ( [ Star ( Star Star ) ] [ Star ( Star Star ) ] Star ) ]
+     *
+     * Trouvé : 39.0
+     * Attendu : 91.0
+     */
+    resistance_value.insert("Star".to_string(), 78.0);
+    assert_eq!(
+        91.0,
+        evaluate(tokenize(&"[ ( [ Star ( Star Star ) ] [ Star ( Star Star ) ] Star ) ( [ Star ( Star Star ) ] [ Star ( Star Star ) ] Star ) ]"),
+        &resistance_value));
 }
