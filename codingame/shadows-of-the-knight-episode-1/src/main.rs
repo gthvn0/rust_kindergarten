@@ -37,8 +37,6 @@ fn main() {
     game.position.x = parse_input!(inputs[0], i32);
     game.position.y = parse_input!(inputs[1], i32);
 
-    eprintln!("GameInfo {:?}", game);
-
     // game loop    
     loop {
         let mut input_line = String::new();
@@ -151,11 +149,11 @@ impl GameInfo {
                 self.position.y = (self.position.y + self.bomb.bottom_left.y) / 2;
             },
             "L" => {
-                self.position.x = (self.bomb.bottom_left.y + self.position.y) / 2;
+                self.position.x = (self.bomb.bottom_left.x + self.position.x) / 2;
             },
             "UL" => {
                 self.position.x = (self.bomb.top_left.y + self.position.y) / 2;
-                self.position.y = (self.bomb.top_left.y + self.position.y) / 2;
+                self.position.y = (self.bomb.top_left.x + self.position.x) / 2;
             },
             _ => unreachable!(),
         }
