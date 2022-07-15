@@ -1,15 +1,36 @@
 #[derive(Debug, Default)]
 struct Node {
-    neighbours: Vec<i32>,
+    neighbours: Vec<usize>,
     visited: bool,
 }
 
-type Graph = Vec<Node>;
+#[derive(Default)]
+struct Graph {
+    nodes: Vec<Node>,
+}
 
+impl Graph {
+    // Return a new graph with n nodes
+    fn new(n: usize) -> Self {
+        let mut g: Graph = Graph::default();
+
+        for _ in 0..n {
+            g.nodes.push(Node::default());
+        }
+        g
+    }
+
+    fn add_edge(&mut self, src: usize, dst: usize) {
+        self.nodes[src].neighbours.push(dst);
+    }
+
+    fn display(&self) {
+        for (i, n) in self.nodes.iter().enumerate() {
+            println!("Node {}: {:?}", i, n);
+        } 
+    }
+}
 fn main() {
-    let mut g: Graph = Graph::new();
-
-
     // Start with simple graph
     //     0
     //    / \
@@ -17,19 +38,13 @@ fn main() {
     //  /
     // 3
 
-    // Start by creating the four nodes
-    g.push(Node::default());
-    g.push(Node::default());
-    g.push(Node::default());
-    g.push(Node::default());
+    // Create a graph with four nodes
+    let mut g: Graph = Graph::new(4);
 
     // Add the edges
-    g[0].neighbours.push(1);
-    g[0].neighbours.push(2);
-    g[1].neighbours.push(3);
+    g.add_edge(0, 1);
+    g.add_edge(0, 2);
+    g.add_edge(1, 3);
 
-    // Print the graph
-    for (i, n) in g.iter().enumerate() {
-        println!("Node {}: {:?}", i, n);
-    }
+    g.display();
 }
