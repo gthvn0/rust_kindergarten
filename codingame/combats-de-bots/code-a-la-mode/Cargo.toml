@@ -1,0 +1,9 @@
+[package]
+name = "code-a-la-mode"
+version = "0.1.0"
+edition = "2021"
+description = "https://www.codingame.com/ide/puzzle/code-a-la-mode"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
