@@ -100,6 +100,18 @@ impl Graph {
             fifo_head += 1;
         }
     }
+
+    // Get the distance between a and b and also returns the first edge to
+    // go from a to b.
+    fn get_distance(&self, a: usize, b:usize) -> (usize, (usize, usize)) {
+        let node_b: &Node = &self.nodes[b];
+
+        if node_b.path.contains(&a) {
+            return (node_b.path.len(), (node_b.path[0], b))
+        }
+
+        (usize::MAX, (0, 0))
+    }
 }
 
 fn main() {
@@ -126,4 +138,9 @@ fn main() {
 
     g.bfs(2);
     g.display();
+
+    for i in 1..7 {
+        let dist = g.get_distance(2, i);
+        println!("dist 2-{} = {} {:?}", i, dist.0, dist.1);
+    }
 }
