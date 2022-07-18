@@ -48,7 +48,7 @@ use std::io;
 // - [ ] Apply to the game
 
 #[derive(Debug, PartialEq)]
-enum StateMachine {
+enum State {
     Locked,
     Unlocked,
 }
@@ -58,12 +58,37 @@ enum Event {
     Push,
 }
 
-fn main() {
-    let mut fsm: StateMachine = StateMachine::Locked;
+#[derive(Debug)]
+struct StateMachine {
+    state: State,
+}
 
-    println!("Init state is {:?}", fsm);
+impl StateMachine {
+    fn new() -> Self {
+        StateMachine {
+            state: State::Locked,
+        }
+    }
+
+    fn display(&self) {
+        println!("State machine: {:?}", self.state);
+    }
+
+    fn apply_event(&mut self, ev: Event) {
+        self.state = match ev {
+            Event::Push => State::Locked,
+            Event::Coin => State::Unlocked,
+        };
+    }
+}
+
+fn main() {
+    let mut fsm: StateMachine = StateMachine::new();
+
+    fsm.display();
 
     loop {
+        // infinite loop
         let mut input_line = String::new();
         io::stdin().read_line(&mut input_line).unwrap();
 
@@ -75,22 +100,10 @@ fn main() {
             _ => {
                 println!("Not a valid input");
                 continue;
-            },
+            }
         };
 
-        fsm = if fsm == StateMachine::Locked {
-            match ev {
-                Event::Push => StateMachine::Locked,
-                Event::Coin => StateMachine::Unlocked,
-            }
-        } else {
-            match ev {
-                Event::Push => StateMachine::Locked,
-                Event::Coin => StateMachine::Unlocked,
-            }
-        };
-        println!("New state {:?}", fsm);
+        fsm.apply_event(ev);
+        fsm.display();
     }
-
-    println!("Done");
 }
