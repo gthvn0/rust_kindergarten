@@ -1,4 +1,4 @@
-use std::{cmp::max};
+use std::cmp::max;
 
 #[derive(Debug, Default)]
 struct Node {
@@ -20,9 +20,12 @@ impl Graph {
         for _ in self.nodes.len()..m {
             self.nodes.push(Node::default());
         }
-        self.nodes[src].neighbours.push(dst);
-        // As edges are not directed we also add dst -> src
-        self.nodes[dst].neighbours.push(src);
+
+        if !self.nodes[src].neighbours.contains(&dst) {
+            self.nodes[src].neighbours.push(dst);
+            // As edges are not directed we also add dst -> src
+            self.nodes[dst].neighbours.push(src);
+        }
     }
 
     fn display(&self) {
