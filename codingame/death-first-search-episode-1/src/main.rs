@@ -107,7 +107,8 @@ impl Graph {
         let node_b: &Node = &self.nodes[b];
 
         if node_b.path.contains(&a) {
-            return (node_b.path.len(), (node_b.path[0], b))
+            let last_p : &usize = node_b.path.last().unwrap();
+            return (node_b.path.len(), (*last_p, b))
         }
 
         (usize::MAX, (0, 0))
