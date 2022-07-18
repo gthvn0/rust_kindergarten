@@ -1,8 +1,9 @@
-use std::cmp::max;
+use std::{cmp::max};
 
 #[derive(Debug, Default)]
 struct Node {
     neighbours: Vec<usize>,
+    path: Vec<usize>,
     visited: bool,
 }
 
@@ -53,34 +54,42 @@ impl Graph {
 
         // Start by setting all nodes as not visisted
         for n in self.nodes.iter_mut() {
+            n.path.clear();
             n.visited = false;
         }
 
+        // Push the node used to start the visit
         fifo.push(start);
         self.nodes[start].visited = true;
-        println!("Start node {:?}", start);
+        //eprintln!("Start node {:?}", start);
 
+        // the main loop
         while fifo_head + 1 <= fifo.len() {
-            let neighbours: Vec<usize>;
+            let neighbours: Vec<usize>; // Copy of the list of neighbours
+            let current_path: Vec<usize>; // Copy of the current path
 
+            // we need to use copy to avoid to have a mutable reference on
+            // self.nodes while iterating the main loop.
             {
-                // When looping through neighbours we will need to have a mutable
-                // reference to self.nodes. So we create a scope to get the list
-                // of neighbours and don't have issue with the current_node that
-                // also have a reference to self.nodes.
                 let current_id = fifo[fifo_head];
                 let current_node = &self.nodes[current_id];
-                println!("Processing node {} <{:?}>", current_id, current_node);
+                //eprintln!("    => processing node {}", current_id);
                 neighbours = current_node.neighbours.clone();
+                current_path = current_node.path.clone();
             }
 
             for id in neighbours.iter() {
                 let neighbour: &mut Node = &mut self.nodes[*id];
                 if !neighbour.visited {
-                    fifo.push(*id);
+                    //eprintln!("        => Visiting node {}", id);
+                    // Update path and visited state. I don't really like this
+                    // cloning. Probably a better way exists...
+                    neighbour.path = current_path.clone();
+                    neighbour.path.push(fifo[fifo_head]);
                     neighbour.visited = true;
+                    fifo.push(*id);
+                    //eprintln!("        => Pushing node {}", id);
                 }
-                println!("    -> Added neighbour {} <{:?}>", *id, neighbour);
             }
 
             // We can now take the next value. At some point all nodes are visited
@@ -97,7 +106,8 @@ fn main() {
     //    1   2
     //   /|   |\
     //  / 4---5 \
-    // 3         6
+    // 3         6 - 7
+    //
     // Create a graph
     let mut g: Graph = Graph::default();
 
@@ -109,9 +119,8 @@ fn main() {
     g.add_edge(2, 5);
     g.add_edge(2, 6);
     g.add_edge(4, 5);
-
-
-    g.display();
+    g.add_edge(6, 7);
 
     g.bfs(2);
+    g.display();
 }
