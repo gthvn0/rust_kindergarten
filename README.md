@@ -57,7 +57,7 @@ home: /home/gthvn1
 cargo new --vcs none codingame
 ```
 
-- Most of exercices are taken from [coding game](https://www.codingame.com)
+- Most of exercices are taken from [codingame](https://www.codingame.com)
 - Maybe have a look to [code wars](https://www.codewars.com)
 
 ## Monads
