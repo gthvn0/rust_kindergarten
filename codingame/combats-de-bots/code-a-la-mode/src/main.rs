@@ -42,20 +42,67 @@
  */
 use std::io;
 
-// Ref: https://fr.wikipedia.org/wiki/Automate_fini
-// - [X] Commencons par tester le "portillon" (FSM)
-// - [ ] Le loup, la chèvre et le chou
-// - [ ] Apply to the game
+/********************************************************
+ * Ref: https://fr.wikipedia.org/wiki/Automate_fini
+ * - [X] Commencons par tester le "portillon" (FSM)
+ * - [ ] Le loup, la chèvre et le chou
+ * - [ ] Apply to the game
+ *
+ ********************************************************
+ * Probleme du loup, de la chevre et du chou
+ *
+ * P: Passeur
+ * C: Chevre
+ * L: Loup
+ * S: Chou
+ *
+ * - L'état initial est celui ou de départ ou tout le monde
+ *   est sur l'ile: PCLS
+ * - L'état final est celui ou l'ile est VIDE
+ * - 'x' est un transition impossible.
+ *
+ *        +------+------+--------+------+
+ *        | Seul | Loup | Chevre | Chou |
+ * +------+------+------+--------+------+
+ * | PCLS | x    | x    | ls     |  x   | => On ne peut pas laisser la chevre avec chou || loup
+ * | pls  | ls   | s    | x      |  l   |
+ * | pcs  | x    | x    | s      |  c   |
+ * | plc  | x    | c    | l      |  x   |
+ * | ls   | pls  | x    | pcls   |  x   |
+ * | ps   | s    | x    | x      | VIDE |
+ * | pc   | c    | x    | VIDE   |  x   |
+ * | pl   | l    | VIDE | x      |  x   |
+ * | s    | ps   | pls  | pcs    |  x   |
+ * | l    | pl   | x    | plc    | pls  |
+ * | c    | pc   | pcl  | x      | pcs  |
+ * +------+------+------+--------+------+
+ *
+ *******************************************************
+ */
 
+#[allow(dead_code)]
 #[derive(Debug, PartialEq)]
 enum State {
-    Locked,
-    Unlocked,
+    PCLS, // Initial State
+    PLS,
+    PCS,
+    PLC,
+    PS,
+    PC,
+    PL,
+    LS,
+    S,
+    L,
+    C,
+    Failed,
+    Vide, // Final state
 }
 
 enum Event {
-    Coin,
-    Push,
+    Seul,
+    Loup,
+    Chevre,
+    Chou,
 }
 
 #[derive(Debug)]
@@ -65,20 +112,15 @@ struct StateMachine {
 
 impl StateMachine {
     fn new() -> Self {
-        StateMachine {
-            state: State::Locked,
-        }
+        StateMachine { state: State::PCLS }
     }
 
     fn display(&self) {
         println!("State machine: {:?}", self.state);
     }
 
-    fn apply_event(&mut self, ev: Event) {
-        self.state = match ev {
-            Event::Push => State::Locked,
-            Event::Coin => State::Unlocked,
-        };
+    fn apply_event(&mut self, _ev: Event) {
+        todo!();
     }
 }
 
@@ -95,10 +137,12 @@ fn main() {
         let input = input_line.trim().to_string().to_uppercase();
 
         let ev: Event = match &input as &str {
-            "PUSH" => Event::Push,
-            "COIN" => Event::Coin,
+            "SEUL" => Event::Seul,
+            "LOUP" => Event::Loup,
+            "CHEVRE" => Event::Chevre,
+            "CHOU" => Event::Chou,
             _ => {
-                println!("Not a valid input");
+                println!("Event can be: Seul, Loup, chevre or chou");
                 continue;
             }
         };
