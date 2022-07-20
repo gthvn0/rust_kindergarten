@@ -40,110 +40,15 @@
  *          - on dessert with a plate will load the dessert
  *      - WAIT: skip its turn
  */
-use std::io;
 
 /********************************************************
  * Ref: https://fr.wikipedia.org/wiki/Automate_fini
  * - [X] Commencons par tester le "portillon" (FSM)
- * - [ ] Le loup, la chèvre et le chou
+ * - [X] Le loup, la chèvre et le chou
  * - [ ] Apply to the game
  *
- ********************************************************
- * Probleme du loup, de la chevre et du chou
- *
- * P: Passeur
- * C: Chevre
- * L: Loup
- * S: Chou
- *
- * - L'état initial est celui ou de départ ou tout le monde
- *   est sur l'ile: PCLS
- * - L'état final est celui ou l'ile est VIDE
- * - 'x' est un transition impossible.
- *
- *        +------+------+--------+------+
- *        | Seul | Loup | Chevre | Chou |
- * +------+------+------+--------+------+
- * | PCLS | x    | x    | ls     |  x   | => On ne peut pas laisser la chevre avec chou || loup
- * | pls  | ls   | s    | x      |  l   |
- * | pcs  | x    | x    | s      |  c   |
- * | plc  | x    | c    | l      |  x   |
- * | pc   | c    | x    | VIDE   |  x   |
- * | ls   | pls  | x    | pcls   |  x   |
- * | s    | x    | pls  | pcs    |  x   | => PS n'est pas valide car il implique que la Chevre et
- * | l    | x    | x    | plc    | pls  |    le loup sont seuls sur l'autre ile (comme PL)
- * | c    | pc   | plc  | x      | pcs  |
- * +------+------+------+--------+------+
- *
- *******************************************************
- */
-
-#[allow(dead_code)]
-#[derive(Debug, PartialEq)]
-enum State {
-    PCLS, // Initial State
-    PLS,
-    PCS,
-    PLC,
-    PC,
-    LS,
-    S,
-    L,
-    C,
-    Failed,
-    Vide, // Final state
-}
-
-enum Event {
-    Seul,
-    Loup,
-    Chevre,
-    Chou,
-}
-
-#[derive(Debug)]
-struct StateMachine {
-    state: State,
-}
-
-impl StateMachine {
-    fn new() -> Self {
-        StateMachine { state: State::PCLS }
-    }
-
-    fn display(&self) {
-        println!("State machine: {:?}", self.state);
-    }
-
-    fn apply_event(&mut self, _ev: Event) {
-        todo!();
-    }
-}
+ ********************************************************/
 
 fn main() {
-    let mut fsm: StateMachine = StateMachine::new();
-
-    fsm.display();
-
-    loop {
-        // infinite loop
-        let mut input_line = String::new();
-        io::stdin().read_line(&mut input_line).unwrap();
-
-        let input = input_line.trim().to_string().to_uppercase();
-
-        let ev: Event = match &input as &str {
-            "SEUL" => Event::Seul,
-            "LOUP" => Event::Loup,
-            "CHEVRE" => Event::Chevre,
-            "CHOU" => Event::Chou,
-            _ => {
-                println!("Event can be: Seul, Loup, chevre or chou");
-                continue;
-            }
-        };
-
-        fsm.apply_event(ev);
-        fsm.display();
-    }
+    println!("Hello");
 }
