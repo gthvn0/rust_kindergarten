@@ -68,13 +68,11 @@ use std::io;
  * | pls  | ls   | s    | x      |  l   |
  * | pcs  | x    | x    | s      |  c   |
  * | plc  | x    | c    | l      |  x   |
- * | ls   | pls  | x    | pcls   |  x   |
- * | ps   | s    | x    | x      | VIDE |
  * | pc   | c    | x    | VIDE   |  x   |
- * | pl   | l    | VIDE | x      |  x   |
- * | s    | ps   | pls  | pcs    |  x   |
- * | l    | pl   | x    | plc    | pls  |
- * | c    | pc   | pcl  | x      | pcs  |
+ * | ls   | pls  | x    | pcls   |  x   |
+ * | s    | x    | pls  | pcs    |  x   | => PS n'est pas valide car il implique que la Chevre et
+ * | l    | x    | x    | plc    | pls  |    le loup sont seuls sur l'autre ile (comme PL)
+ * | c    | pc   | plc  | x      | pcs  |
  * +------+------+------+--------+------+
  *
  *******************************************************
@@ -87,9 +85,7 @@ enum State {
     PLS,
     PCS,
     PLC,
-    PS,
     PC,
-    PL,
     LS,
     S,
     L,
