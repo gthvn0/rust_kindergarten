@@ -63,7 +63,7 @@ struct Position {
 }
 
 #[derive(Debug)]
-enum PState {
+enum PlayerState {
     None,
     Dish,
     DishIce,
@@ -72,37 +72,46 @@ enum PState {
 }
 
 #[derive(Debug)]
-struct PlayerState {
-    state: PState,
+struct GameState {
+    state: PlayerState,
     player: Position,
     dish: Position,
     window: Position,
     ice: Position,
     blue: Position,
+    empty_space: Vec<Position>,
 }
 
-impl PlayerState {
-    fn near(item: &Position) -> Position {
-        // p1 is near
-        let x: usize = match item.x {
-            0 => 1,
-            10 => 9,
-            _ => item.x,
-        };
-        let y: usize = match item.y {
-            0 => 1,
-            6 => 5,
-            _ => item.y,
-        };
+impl GameState {
+    fn near(&self, item: &Position) -> Position {
+        // Return the first empty space near the item
+        // There is height possible values
+        let check_pos: [(usize, usize); 8] = [
+            (item.x - 1, item.y - 1),
+            (item.x, item.y - 1),
+            (item.x + 1, item.y - 1),
+            (item.x - 1, item.y),
+            (item.x + 1, item.y),
+            (item.x - 1, item.y + 1),
+            (item.x, item.y + 1),
+            (item.x + 1, item.y + 1),
+        ];
 
-        Position { x, y }
+        for (a, b) in check_pos.iter() {
+            if self.empty_space.contains(&Position { x: *a, y: *b }) {
+                return Position { x: *a, y: *b };
+            }
+        }
+
+        // If we are here it means that we can not catch the item...
+        unreachable!()
     }
 
     fn get_action(&self) -> String {
         match self.state {
-            PState::None => {
+            PlayerState::None => {
                 // On va chercher une assiette
-                let near_dish = PlayerState::near(&self.dish);
+                let near_dish = self.near(&self.dish);
                 let msg = if self.player == near_dish {
                     format!("USE {} {}", self.dish.x, self.dish.y)
                 } else {
@@ -110,9 +119,9 @@ impl PlayerState {
                 };
                 msg
             }
-            PState::Dish => {
+            PlayerState::Dish => {
                 // On va chercher le bluebeary
-                let near_blue: Position = PlayerState::near(&self.blue);
+                let near_blue: Position = self.near(&self.blue);
                 let msg = if self.player == near_blue {
                     format!("USE {} {}", self.blue.x, self.blue.y)
                 } else {
@@ -120,9 +129,9 @@ impl PlayerState {
                 };
                 msg
             }
-            PState::DishBlue => {
+            PlayerState::DishBlue => {
                 // On va chercher l'icecream
-                let near_ice: Position = PlayerState::near(&self.ice);
+                let near_ice: Position = self.near(&self.ice);
                 let msg = if self.player == near_ice {
                     format!("USE {} {}", self.ice.x, self.ice.y)
                 } else {
@@ -130,9 +139,9 @@ impl PlayerState {
                 };
                 msg
             }
-            PState::DishIce => {
+            PlayerState::DishIce => {
                 // On va chercher le bluebeary
-                let near_blue: Position = PlayerState::near(&self.blue);
+                let near_blue: Position = self.near(&self.blue);
                 let msg = if self.player == near_blue {
                     format!("USE {} {}", self.blue.x, self.blue.y)
                 } else {
@@ -140,9 +149,9 @@ impl PlayerState {
                 };
                 msg
             }
-            PState::DishIceBlue => {
+            PlayerState::DishIceBlue => {
                 // On donne au client
-                let near_window: Position = PlayerState::near(&self.window);
+                let near_window: Position = self.near(&self.window);
                 let msg = if self.player == near_window {
                     format!("USE {} {}", self.window.x, self.window.y)
                 } else {
@@ -164,17 +173,19 @@ fn main() {
     eprintln!("-------------------");
 
     /***
-     * Player State: It is more the state of the Game
+     * Game State
      */
-    let mut player = PlayerState {
-        state: PState::None,
+    let mut game = GameState {
+        state: PlayerState::None,
         // Put item in inaccessible position for init
         player: Position { x: 42, y: 42 },
         dish: Position { x: 42, y: 42 },
         window: Position { x: 42, y: 42 },
         blue: Position { x: 42, y: 42 },
         ice: Position { x: 42, y: 42 },
+        empty_space: Vec::new(),
     };
+
     /***********************************************************
      * INFORMATION ABOUT CUSTOMERS
      *
@@ -210,19 +221,22 @@ fn main() {
         eprintln!("kitchen line {}: {}", y, kitchen_line);
         for (x, c) in kitchen_line.chars().enumerate() {
             match c {
-                'D' => player.dish = Position { x, y },
-                'W' => player.window = Position { x, y },
-                'B' => player.blue = Position { x, y },
-                'I' => player.ice = Position { x, y },
+                'D' => game.dish = Position { x, y },
+                'W' => game.window = Position { x, y },
+                'B' => game.blue = Position { x, y },
+                'I' => game.ice = Position { x, y },
+                '.' => game.empty_space.push(Position { x, y }),
+                '0' => game.empty_space.push(Position { x, y }),
+                '1' => game.empty_space.push(Position { x, y }),
                 _ => continue,
             }
         }
     }
 
-    eprintln!("Dish at {:?}", player.dish);
-    eprintln!("Window at {:?}", player.window);
-    eprintln!("Blueberry at {:?}", player.blue);
-    eprintln!("IceCream at {:?}", player.ice);
+    eprintln!("Dish at {:?}", game.dish);
+    eprintln!("Window at {:?}", game.window);
+    eprintln!("Blueberry at {:?}", game.blue);
+    eprintln!("IceCream at {:?}", game.ice);
 
     /***********************************************************
      * MAIN LOOP
@@ -242,20 +256,20 @@ fn main() {
         io::stdin().read_line(&mut input_line).unwrap();
         let inputs = input_line.split(" ").collect::<Vec<_>>();
 
-        player.player = Position {
+        game.player = Position {
             x: parse_input!(inputs[0], usize),
             y: parse_input!(inputs[1], usize),
         };
 
         let player_state = inputs[2].trim();
         eprintln!("state == {}", player_state);
-        player.state = match player_state {
-            "NONE" => PState::None,
-            "DISH" => PState::Dish,
-            "DISH-BLUEBERRIES" => PState::DishBlue,
-            "DISH-ICE_CREAM" => PState::DishIce,
-            "DISH-ICE_CREAM-BLUEBERRIES" => PState::DishIceBlue,
-            "DISH-BLUEBERRIES-ICE_CREAM" => PState::DishIceBlue,
+        game.state = match player_state {
+            "NONE" => PlayerState::None,
+            "DISH" => PlayerState::Dish,
+            "DISH-BLUEBERRIES" => PlayerState::DishBlue,
+            "DISH-ICE_CREAM" => PlayerState::DishIce,
+            "DISH-ICE_CREAM-BLUEBERRIES" => PlayerState::DishIceBlue,
+            "DISH-BLUEBERRIES-ICE_CREAM" => PlayerState::DishIceBlue,
             _ => unreachable!(),
         };
 
@@ -319,8 +333,8 @@ fn main() {
         // USE x y
         // WAIT
 
-        eprintln!("Player: {:?}", player);
+        eprintln!("Player: {:?}", game);
         eprintln!("Your action...");
-        println!("{}", player.get_action());
+        println!("{}", game.get_action());
     }
 }
