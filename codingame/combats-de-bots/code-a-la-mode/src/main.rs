@@ -56,7 +56,7 @@ macro_rules! parse_input {
     };
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, PartialEq)]
 struct Position {
     x: usize,
     y: usize,
@@ -82,8 +82,75 @@ struct PlayerState {
 }
 
 impl PlayerState {
-    fn get_action(&self) -> &str {
-        "WAIT"
+    fn near(item: &Position) -> Position {
+        // p1 is near
+        let x: usize = match item.x {
+            0 => 1,
+            10 => 9,
+            _ => item.x,
+        };
+        let y: usize = match item.y {
+            0 => 1,
+            6 => 5,
+            _ => item.y,
+        };
+
+        Position { x, y }
+    }
+
+    fn get_action(&self) -> String {
+        match self.state {
+            PState::None => {
+                // On va chercher une assiette
+                let near_dish = PlayerState::near(&self.dish);
+                let msg = if self.player == near_dish {
+                    format!("USE {} {}", self.dish.x, self.dish.y)
+                } else {
+                    format!("MOVE {} {}", near_dish.x, near_dish.y)
+                };
+                msg
+            }
+            PState::Dish => {
+                // On va chercher le bluebeary
+                let near_blue: Position = PlayerState::near(&self.blue);
+                let msg = if self.player == near_blue {
+                    format!("USE {} {}", self.blue.x, self.blue.y)
+                } else {
+                    format!("MOVE {} {}", near_blue.x, near_blue.y)
+                };
+                msg
+            }
+            PState::DishBlue => {
+                // On va chercher l'icecream
+                let near_ice: Position = PlayerState::near(&self.ice);
+                let msg = if self.player == near_ice {
+                    format!("USE {} {}", self.ice.x, self.ice.y)
+                } else {
+                    format!("MOVE {} {}", near_ice.x, near_ice.y)
+                };
+                msg
+            }
+            PState::DishIce => {
+                // On va chercher le bluebeary
+                let near_blue: Position = PlayerState::near(&self.blue);
+                let msg = if self.player == near_blue {
+                    format!("USE {} {}", self.blue.x, self.blue.y)
+                } else {
+                    format!("MOVE {} {}", near_blue.x, near_blue.y)
+                };
+                msg
+            }
+            PState::DishIceBlue => {
+                // On donne au client
+                let near_window: Position = PlayerState::near(&self.window);
+                let msg = if self.player == near_window {
+                    format!("USE {} {}", self.window.x, self.window.y)
+                } else {
+                    format!("MOVE {} {}", near_window.x, near_window.y)
+                };
+                msg
+            }
+        }
     }
 }
 
@@ -151,11 +218,6 @@ fn main() {
             }
         }
     }
-
-    assert!(player.dish.x < 11 && player.dish.y < 7);
-    assert!(player.window.x < 11 && player.window.y < 7);
-    assert!(player.blue.x < 11 && player.blue.y < 7);
-    assert!(player.ice.x < 11 && player.ice.y < 7);
 
     eprintln!("Dish at {:?}", player.dish);
     eprintln!("Window at {:?}", player.window);
