@@ -56,6 +56,37 @@ macro_rules! parse_input {
     };
 }
 
+#[derive(Debug, Default)]
+struct Position {
+    x: usize,
+    y: usize,
+}
+
+#[derive(Debug)]
+enum PState {
+    None,
+    Dish,
+    DishIce,
+    DishBlue,
+    DishIceBlue,
+}
+
+#[derive(Debug)]
+struct PlayerState {
+    state: PState,
+    player: Position,
+    dish: Position,
+    window: Position,
+    ice: Position,
+    blue: Position,
+}
+
+impl PlayerState {
+    fn get_action(&self) -> &str {
+        "WAIT"
+    }
+}
+
 /**
  * Auto-generated code below aims at helping you parse
  * the standard input according to the problem statement.
@@ -65,13 +96,30 @@ fn main() {
     eprintln!("Init informations");
     eprintln!("-------------------");
 
+    /***
+     * Player State: It is more the state of the Game
+     */
+    let mut player = PlayerState {
+        state: PState::None,
+        // Put item in inaccessible position for init
+        player: Position { x: 42, y: 42 },
+        dish: Position { x: 42, y: 42 },
+        window: Position { x: 42, y: 42 },
+        blue: Position { x: 42, y: 42 },
+        ice: Position { x: 42, y: 42 },
+    };
+    /***********************************************************
+     * INFORMATION ABOUT CUSTOMERS
+     *
+     * Not used for now
+     */
     let mut input_line = String::new();
     io::stdin().read_line(&mut input_line).unwrap();
     let num_all_customers = parse_input!(input_line, i32);
     eprintln!("num_all_customers: {}", num_all_customers);
     // num_all_customers: 20
 
-    for i in 0..num_all_customers as usize {
+    for _ in 0..num_all_customers as usize {
         let mut input_line = String::new();
         io::stdin().read_line(&mut input_line).unwrap();
         let inputs = input_line.split(" ").collect::<Vec<_>>();
@@ -84,18 +132,39 @@ fn main() {
         // customer item: DISH-BLUEBERRIES-ICE_CREAM  award: 650
     }
 
-    for i in 0..7 as usize {
+    /***********************************************************
+     * GET INFORMATION ABOUT PLACEMENT OF OBJECTS
+     */
+
+    for y in 0..7 as usize {
         let mut input_line = String::new();
         io::stdin().read_line(&mut input_line).unwrap();
         let kitchen_line = input_line.trim_matches('\n').to_string();
-        eprintln!("kitchen line {}: {}", i, kitchen_line);
-        // kitchen line 0: #####D####I
+        eprintln!("kitchen line {}: {}", y, kitchen_line);
+        for (x, c) in kitchen_line.chars().enumerate() {
+            match c {
+                'D' => player.dish = Position { x, y },
+                'W' => player.window = Position { x, y },
+                'B' => player.blue = Position { x, y },
+                'I' => player.ice = Position { x, y },
+                _ => continue,
+            }
+        }
     }
 
-    let mut commands: Vec<&str> = vec!["MOVE 9 5"];
+    assert!(player.dish.x < 11 && player.dish.y < 7);
+    assert!(player.window.x < 11 && player.window.y < 7);
+    assert!(player.blue.x < 11 && player.blue.y < 7);
+    assert!(player.ice.x < 11 && player.ice.y < 7);
 
-    commands.reverse(); // Put order ready for poping in the game loop
+    eprintln!("Dish at {:?}", player.dish);
+    eprintln!("Window at {:?}", player.window);
+    eprintln!("Blueberry at {:?}", player.blue);
+    eprintln!("IceCream at {:?}", player.ice);
 
+    /***********************************************************
+     * MAIN LOOP
+     */
     eprintln!("-------------------");
     eprintln!("Start the loop game");
     eprintln!("-------------------");
@@ -110,11 +179,23 @@ fn main() {
         let mut input_line = String::new();
         io::stdin().read_line(&mut input_line).unwrap();
         let inputs = input_line.split(" ").collect::<Vec<_>>();
-        let player_x = parse_input!(inputs[0], i32);
-        let player_y = parse_input!(inputs[1], i32);
-        let player_item = inputs[2].trim().to_string();
-        eprintln!("player ({}, {}), item {}", player_x, player_y, player_item);
-        // player (5, 1), item DISH
+
+        player.player = Position {
+            x: parse_input!(inputs[0], usize),
+            y: parse_input!(inputs[1], usize),
+        };
+
+        let player_state = inputs[2].trim();
+        eprintln!("state == {}", player_state);
+        player.state = match player_state {
+            "NONE" => PState::None,
+            "DISH" => PState::Dish,
+            "DISH-BLUEBERRIES" => PState::DishBlue,
+            "DISH-ICE_CREAM" => PState::DishIce,
+            "DISH-ICE_CREAM-BLUEBERRIES" => PState::DishIceBlue,
+            "DISH-BLUEBERRIES-ICE_CREAM" => PState::DishIceBlue,
+            _ => unreachable!(),
+        };
 
         let mut input_line = String::new();
         io::stdin().read_line(&mut input_line).unwrap();
@@ -134,7 +215,7 @@ fn main() {
         eprintln!("num tables with item: {}", num_tables_with_items);
         // num tables with item: 0
 
-        for i in 0..num_tables_with_items as usize {
+        for _ in 0..num_tables_with_items as usize {
             let mut input_line = String::new();
             io::stdin().read_line(&mut input_line).unwrap();
             let inputs = input_line.split(" ").collect::<Vec<_>>();
@@ -159,16 +240,13 @@ fn main() {
         eprintln!("number of customers waiting for food {}", num_customers);
         // number of customers waiting for food 3
 
-        for i in 0..num_customers as usize {
+        for _ in 0..num_customers as usize {
             let mut input_line = String::new();
             io::stdin().read_line(&mut input_line).unwrap();
             let inputs = input_line.split(" ").collect::<Vec<_>>();
             let customer_item = inputs[0].trim().to_string();
             let customer_award = parse_input!(inputs[1], i32);
-            eprintln!(
-                "customer item: {}  award: {}",
-                customer_item, customer_award
-            );
+            eprintln!("customer item: {} award: {}", customer_item, customer_award);
             // customer item: DISH-BLUEBERRIES-ICE_CREAM  award: 638
         }
 
@@ -179,11 +257,8 @@ fn main() {
         // USE x y
         // WAIT
 
+        eprintln!("Player: {:?}", player);
         eprintln!("Your action...");
-        if let Some(cmd) = commands.pop() {
-            println!("{}", cmd);
-        } else {
-            println!("WAIT");
-        }
+        println!("{}", player.get_action());
     }
 }
