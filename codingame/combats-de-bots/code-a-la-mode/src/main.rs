@@ -62,27 +62,66 @@ struct Position {
     y: usize,
 }
 
+/*
+ */
 #[derive(Debug)]
 enum PlayerState {
-    None,
     Dish,
-    DishIce,
-    DishBlue,
-    DishIceBlue,
+    Ice,
+    Straw,
+    Chop,
+    Blue,
+    Deliver,
 }
 
 #[derive(Debug)]
 struct GameState {
-    state: PlayerState,
+    states: Vec<PlayerState>, // current state is the last item
+    empty_space: Vec<Position>,
     player: Position,
     dish: Position,
     window: Position,
     ice: Position,
     blue: Position,
-    empty_space: Vec<Position>,
+    straw: Position,
+    chop: Position,
 }
 
 impl GameState {
+    // Takes a string like "DISH-ICE_CREAM-CHOPPED_STRAWBERRIES"
+    // and generates states => [Deliver, Straw, Ice, Dish]
+    fn set_states(&mut self, s: &String) {
+        let mut vs = s
+            .split('-')
+            .map(|s| s.to_uppercase())
+            .collect::<Vec<String>>();
+        vs.push(String::from("DELIVER"));
+        vs.reverse();
+
+        // We choose the order
+        self.states = Vec::new();
+        if vs.contains(&String::from("CHOPPED_STRAWBERRIES")) {
+            self.states.push(PlayerState::Straw);
+            self.states.push(PlayerState::Chop);
+        }
+
+        if vs.contains(&String::from("DISH")) {
+            self.states.push(PlayerState::Dish);
+        }
+
+        if vs.contains(&String::from("ICE_CREAM")) {
+            self.states.push(PlayerState::Ice);
+        }
+
+        if vs.contains(&String::from("BLUEBERRIES")) {
+            self.states.push(PlayerState::Blue);
+        }
+
+        self.states.push(PlayerState::Deliver);
+        // And now we just need to reverse it to get the right order
+        self.states.reverse();
+    }
+
     fn near(&self, item: &Position) -> Position {
         // Return the first empty space near the item
         // There is height possible values
@@ -107,58 +146,75 @@ impl GameState {
         unreachable!()
     }
 
-    fn get_action(&self) -> String {
-        match self.state {
-            PlayerState::None => {
+    fn get_action(&mut self) -> String {
+        match self.states.last() {
+            Some(PlayerState::Dish) => {
                 // On va chercher une assiette
-                let near_dish = self.near(&self.dish);
+                let near_dish: Position = self.near(&self.dish);
                 let msg = if self.player == near_dish {
+                    self.states.pop();
                     format!("USE {} {}", self.dish.x, self.dish.y)
                 } else {
                     format!("MOVE {} {}", near_dish.x, near_dish.y)
                 };
                 msg
             }
-            PlayerState::Dish => {
-                // On va chercher le bluebeary
-                let near_blue: Position = self.near(&self.blue);
-                let msg = if self.player == near_blue {
-                    format!("USE {} {}", self.blue.x, self.blue.y)
-                } else {
-                    format!("MOVE {} {}", near_blue.x, near_blue.y)
-                };
-                msg
-            }
-            PlayerState::DishBlue => {
+            Some(PlayerState::Ice) => {
                 // On va chercher l'icecream
                 let near_ice: Position = self.near(&self.ice);
                 let msg = if self.player == near_ice {
+                    self.states.pop();
                     format!("USE {} {}", self.ice.x, self.ice.y)
                 } else {
                     format!("MOVE {} {}", near_ice.x, near_ice.y)
                 };
                 msg
             }
-            PlayerState::DishIce => {
-                // On va chercher le bluebeary
+            Some(PlayerState::Blue) => {
+                // On va chercher le blueberry
                 let near_blue: Position = self.near(&self.blue);
                 let msg = if self.player == near_blue {
+                    self.states.pop();
                     format!("USE {} {}", self.blue.x, self.blue.y)
                 } else {
                     format!("MOVE {} {}", near_blue.x, near_blue.y)
                 };
                 msg
             }
-            PlayerState::DishIceBlue => {
+            Some(PlayerState::Straw) => {
+                // On va chercher la fraise et la couper
+                let near_straw: Position = self.near(&self.straw);
+                let msg = if self.player == near_straw {
+                    self.states.pop();
+                    format!("USE {} {}", self.straw.x, self.straw.y)
+                } else {
+                    format!("MOVE {} {}", near_straw.x, near_straw.y)
+                };
+                msg
+            }
+            Some(PlayerState::Chop) => {
+                // On va couper la fraise
+                let near_chop: Position = self.near(&self.chop);
+                let msg = if self.player == near_chop {
+                    self.states.pop();
+                    format!("USE {} {}", self.chop.x, self.chop.y)
+                } else {
+                    format!("MOVE {} {}", near_chop.x, near_chop.y)
+                };
+                msg
+            }
+            Some(PlayerState::Deliver) => {
                 // On donne au client
                 let near_window: Position = self.near(&self.window);
                 let msg = if self.player == near_window {
+                    self.states.pop();
                     format!("USE {} {}", self.window.x, self.window.y)
                 } else {
                     format!("MOVE {} {}", near_window.x, near_window.y)
                 };
                 msg
             }
+            _ => unreachable!(),
         }
     }
 }
@@ -176,14 +232,16 @@ fn main() {
      * Game State
      */
     let mut game = GameState {
-        state: PlayerState::None,
+        states: Vec::new(),
+        empty_space: Vec::new(),
         // Put item in inaccessible position for init
         player: Position { x: 42, y: 42 },
         dish: Position { x: 42, y: 42 },
         window: Position { x: 42, y: 42 },
         blue: Position { x: 42, y: 42 },
         ice: Position { x: 42, y: 42 },
-        empty_space: Vec::new(),
+        straw: Position { x: 42, y: 42 },
+        chop: Position { x: 42, y: 42 },
     };
 
     /***********************************************************
@@ -225,6 +283,8 @@ fn main() {
                 'W' => game.window = Position { x, y },
                 'B' => game.blue = Position { x, y },
                 'I' => game.ice = Position { x, y },
+                'S' => game.straw = Position { x, y },
+                'C' => game.chop = Position { x, y },
                 '.' => game.empty_space.push(Position { x, y }),
                 '0' => game.empty_space.push(Position { x, y }),
                 '1' => game.empty_space.push(Position { x, y }),
@@ -237,6 +297,8 @@ fn main() {
     eprintln!("Window at {:?}", game.window);
     eprintln!("Blueberry at {:?}", game.blue);
     eprintln!("IceCream at {:?}", game.ice);
+    eprintln!("Strawberry at {:?}", game.straw);
+    eprintln!("Chop at {:?}", game.chop);
 
     /***********************************************************
      * MAIN LOOP
@@ -263,15 +325,6 @@ fn main() {
 
         let player_state = inputs[2].trim();
         eprintln!("state == {}", player_state);
-        game.state = match player_state {
-            "NONE" => PlayerState::None,
-            "DISH" => PlayerState::Dish,
-            "DISH-BLUEBERRIES" => PlayerState::DishBlue,
-            "DISH-ICE_CREAM" => PlayerState::DishIce,
-            "DISH-ICE_CREAM-BLUEBERRIES" => PlayerState::DishIceBlue,
-            "DISH-BLUEBERRIES-ICE_CREAM" => PlayerState::DishIceBlue,
-            _ => unreachable!(),
-        };
 
         let mut input_line = String::new();
         io::stdin().read_line(&mut input_line).unwrap();
@@ -316,6 +369,8 @@ fn main() {
         eprintln!("number of customers waiting for food {}", num_customers);
         // number of customers waiting for food 3
 
+        let mut max_award: i32 = 0;
+        let mut order = String::new();
         for _ in 0..num_customers as usize {
             let mut input_line = String::new();
             io::stdin().read_line(&mut input_line).unwrap();
@@ -323,7 +378,17 @@ fn main() {
             let customer_item = inputs[0].trim().to_string();
             let customer_award = parse_input!(inputs[1], i32);
             eprintln!("customer item: {} award: {}", customer_item, customer_award);
-            // customer item: DISH-BLUEBERRIES-ICE_CREAM  award: 638
+            if customer_award > max_award {
+                max_award = customer_award;
+                order = customer_item;
+            }
+        }
+        eprintln!("items: {}", order);
+        // customer item: DISH-BLUEBERRIES-ICE_CREAM  award: 638
+
+        // get state new order if empty
+        if game.states.is_empty() {
+            game.set_states(&order);
         }
 
         // Write an action using println!("message...");
@@ -333,7 +398,7 @@ fn main() {
         // USE x y
         // WAIT
 
-        eprintln!("Player: {:?}", game);
+        eprintln!("Player: {:#?}", game);
         eprintln!("Your action...");
         println!("{}", game.get_action());
     }
