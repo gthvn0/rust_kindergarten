@@ -1,15 +1,5 @@
 /*
  * Kitchen is 11 x 7
- * So if we start by numbering from top, left
- * we will have cells from:
- *    0 -> 10
- *   11 -> 21
- *   22 -> 32
- *   33 -> 43
- *   44 -> 54
- *   55 -> 65
- *   66 -> 76
- *  => 77 cells
  *
  *  Here is how kitchen is modeled:
  *  kitchen line: #####D#####
@@ -19,18 +9,7 @@
  *  kitchen line: #.##.####.#
  *  kitchen line: #.........#
  *  kitchen line: #####W#####
- *
- *  where:
- *      - '#': workspace
- *      - '.': empty case
- *      - '0': player 0
- *      - '1': player 1
- *      - 'D': dishwasher
- *      - 'W': window for client orders
- *      Options:
- *      - 'B': blueberries
- *      - 'I': ice cream
- *
+ * *
  *  ACTIONS:
  *      - MOVE x y
  *      - USE x y
@@ -45,8 +24,7 @@
  * Ref: https://fr.wikipedia.org/wiki/Automate_fini
  * - [X] Commencons par tester le "portillon" (FSM)
  * - [X] Le loup, la chèvre et le chou
- * - [ ] Apply to the game
- *
+ * - [X] Apply to the game
  ********************************************************/
 use std::io;
 
@@ -62,14 +40,16 @@ struct Position {
     y: usize,
 }
 
-/*
- */
 #[derive(Debug)]
 enum PlayerState {
     Dish,
+    PutPlate,
+    TakePlate,
     Ice,
     Straw,
     Chop,
+    Dough,
+    Oven,
     Blue,
     Deliver,
 }
@@ -84,37 +64,37 @@ struct GameState {
     ice: Position,
     blue: Position,
     straw: Position,
+    dough: Position,
     chop: Position,
+    oven: Position,
 }
 
 impl GameState {
     // Takes a string like "DISH-ICE_CREAM-CHOPPED_STRAWBERRIES"
     // and generates states => [Deliver, Straw, Ice, Dish]
     fn set_states(&mut self, s: &String) {
-        let mut vs = s
-            .split('-')
-            .map(|s| s.to_uppercase())
-            .collect::<Vec<String>>();
-        vs.push(String::from("DELIVER"));
-        vs.reverse();
-
-        // We choose the order
         self.states = Vec::new();
-        if vs.contains(&String::from("CHOPPED_STRAWBERRIES")) {
-            self.states.push(PlayerState::Straw);
-            self.states.push(PlayerState::Chop);
-        }
 
-        if vs.contains(&String::from("DISH")) {
-            self.states.push(PlayerState::Dish);
-        }
-
-        if vs.contains(&String::from("ICE_CREAM")) {
-            self.states.push(PlayerState::Ice);
-        }
-
-        if vs.contains(&String::from("BLUEBERRIES")) {
-            self.states.push(PlayerState::Blue);
+        for item in s.split('-').into_iter().map(|s| s.to_uppercase()) {
+            match &item[..] {
+                "DISH" => self.states.push(PlayerState::Dish),
+                // Put action in reverse order
+                "CROISSANT" => {
+                    self.states.push(PlayerState::TakePlate);
+                    self.states.push(PlayerState::Oven);
+                    self.states.push(PlayerState::Dough);
+                    self.states.push(PlayerState::PutPlate);
+                }
+                "CHOPPED_STRAWBERRIES" => {
+                    self.states.push(PlayerState::TakePlate);
+                    self.states.push(PlayerState::Chop);
+                    self.states.push(PlayerState::Straw);
+                    self.states.push(PlayerState::PutPlate);
+                }
+                "ICE_CREAM" => self.states.push(PlayerState::Ice),
+                "BLUEBERRIES" => self.states.push(PlayerState::Blue),
+                _ => unreachable!(),
+            }
         }
 
         self.states.push(PlayerState::Deliver);
@@ -214,7 +194,19 @@ impl GameState {
                 };
                 msg
             }
-            _ => unreachable!(),
+            Some(PlayerState::TakePlate) => {
+                todo!()
+            }
+            Some(PlayerState::PutPlate) => {
+                todo!()
+            }
+            Some(PlayerState::Oven) => {
+                todo!()
+            }
+            Some(PlayerState::Dough) => {
+                todo!()
+            }
+            _ => todo!(),
         }
     }
 }
@@ -241,7 +233,9 @@ fn main() {
         blue: Position { x: 42, y: 42 },
         ice: Position { x: 42, y: 42 },
         straw: Position { x: 42, y: 42 },
+        dough: Position { x: 42, y: 42 },
         chop: Position { x: 42, y: 42 },
+        oven: Position { x: 42, y: 42 },
     };
 
     /***********************************************************
@@ -284,7 +278,9 @@ fn main() {
                 'B' => game.blue = Position { x, y },
                 'I' => game.ice = Position { x, y },
                 'S' => game.straw = Position { x, y },
+                'H' => game.dough = Position { x, y },
                 'C' => game.chop = Position { x, y },
+                'O' => game.oven = Position { x, y },
                 '.' => game.empty_space.push(Position { x, y }),
                 '0' => game.empty_space.push(Position { x, y }),
                 '1' => game.empty_space.push(Position { x, y }),
@@ -298,7 +294,9 @@ fn main() {
     eprintln!("Blueberry at {:?}", game.blue);
     eprintln!("IceCream at {:?}", game.ice);
     eprintln!("Strawberry at {:?}", game.straw);
+    eprintln!("Dough at {:?}", game.dough);
     eprintln!("Chop at {:?}", game.chop);
+    eprintln!("Oven at {:?}", game.oven);
 
     /***********************************************************
      * MAIN LOOP
@@ -398,7 +396,7 @@ fn main() {
         // USE x y
         // WAIT
 
-        eprintln!("Player: {:#?}", game);
+        eprintln!("Player: {:?}", game);
         eprintln!("Your action...");
         println!("{}", game.get_action());
     }
