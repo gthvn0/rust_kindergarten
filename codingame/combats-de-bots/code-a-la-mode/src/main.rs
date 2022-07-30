@@ -58,6 +58,8 @@ enum PlayerState {
 struct GameState {
     states: Vec<PlayerState>, // current state is the last item
     empty_space: Vec<Position>,
+    workspace: Vec<Position>,
+    saved_workspace: Position,
     player: Position,
     dish: Position,
     window: Position,
@@ -69,6 +71,19 @@ struct GameState {
     oven: Position,
 }
 
+//macro_rules! use_or_move {
+//    ($self:ident, $item:ident) => {
+//        let near_item: Position = $self.near_empty_space(&$self.$item);
+//        let msg = if $self.player == near_item {
+//            $self.states.pop();
+//            format!("USE {} {}", $self.$item.x, $self.$item.y)
+//        } else {
+//            format!("MOVE {} {}", near_item.x, near_item.y)
+//        };
+//        msg
+//    };
+//}
+
 impl GameState {
     // Takes a string like "DISH-ICE_CREAM-CHOPPED_STRAWBERRIES"
     // and generates states => [Deliver, Straw, Ice, Dish]
@@ -78,18 +93,17 @@ impl GameState {
         for item in s.split('-').into_iter().map(|s| s.to_uppercase()) {
             match &item[..] {
                 "DISH" => self.states.push(PlayerState::Dish),
-                // Put action in reverse order
                 "CROISSANT" => {
-                    self.states.push(PlayerState::TakePlate);
+                    self.states.push(PlayerState::PutPlate);
                     self.states.push(PlayerState::Oven);
                     self.states.push(PlayerState::Dough);
-                    self.states.push(PlayerState::PutPlate);
+                    self.states.push(PlayerState::TakePlate);
                 }
                 "CHOPPED_STRAWBERRIES" => {
-                    self.states.push(PlayerState::TakePlate);
-                    self.states.push(PlayerState::Chop);
-                    self.states.push(PlayerState::Straw);
                     self.states.push(PlayerState::PutPlate);
+                    self.states.push(PlayerState::Straw);
+                    self.states.push(PlayerState::Chop);
+                    self.states.push(PlayerState::TakePlate);
                 }
                 "ICE_CREAM" => self.states.push(PlayerState::Ice),
                 "BLUEBERRIES" => self.states.push(PlayerState::Blue),
@@ -100,9 +114,10 @@ impl GameState {
         self.states.push(PlayerState::Deliver);
         // And now we just need to reverse it to get the right order
         self.states.reverse();
+        eprintln!("{:#?}", self.states);
     }
 
-    fn near(&self, item: &Position) -> Position {
+    fn near_empty_space(&self, item: &Position) -> Position {
         // Return the first empty space near the item
         // There is height possible values
         let check_pos: [(usize, usize); 8] = [
@@ -121,16 +136,39 @@ impl GameState {
                 return Position { x: *a, y: *b };
             }
         }
-
         // If we are here it means that we can not catch the item...
         unreachable!()
+    }
+
+    fn set_workspace(&mut self) -> bool {
+        // Set saved_workspace to the first available workspace around us.
+        let check_pos: [(usize, usize); 8] = [
+            (self.player.x - 1, self.player.y - 1),
+            (self.player.x, self.player.y - 1),
+            (self.player.x + 1, self.player.y - 1),
+            (self.player.x - 1, self.player.y),
+            (self.player.x + 1, self.player.y),
+            (self.player.x - 1, self.player.y + 1),
+            (self.player.x, self.player.y + 1),
+            (self.player.x + 1, self.player.y + 1),
+        ];
+
+        for (a, b) in check_pos.iter() {
+            if self.workspace.contains(&Position { x: *a, y: *b }) {
+                self.saved_workspace = Position { x: *a, y: *b };
+                eprintln!("savec workspace at {} {}", *a, *b);
+                return true;
+            }
+        }
+
+        false
     }
 
     fn get_action(&mut self) -> String {
         match self.states.last() {
             Some(PlayerState::Dish) => {
-                // On va chercher une assiette
-                let near_dish: Position = self.near(&self.dish);
+                eprintln!("On va chercher une assiette");
+                let near_dish: Position = self.near_empty_space(&self.dish);
                 let msg = if self.player == near_dish {
                     self.states.pop();
                     format!("USE {} {}", self.dish.x, self.dish.y)
@@ -140,8 +178,8 @@ impl GameState {
                 msg
             }
             Some(PlayerState::Ice) => {
-                // On va chercher l'icecream
-                let near_ice: Position = self.near(&self.ice);
+                eprintln!("On va chercher l'icecream");
+                let near_ice: Position = self.near_empty_space(&self.ice);
                 let msg = if self.player == near_ice {
                     self.states.pop();
                     format!("USE {} {}", self.ice.x, self.ice.y)
@@ -151,8 +189,8 @@ impl GameState {
                 msg
             }
             Some(PlayerState::Blue) => {
-                // On va chercher le blueberry
-                let near_blue: Position = self.near(&self.blue);
+                eprintln!("On va chercher le blueberry");
+                let near_blue: Position = self.near_empty_space(&self.blue);
                 let msg = if self.player == near_blue {
                     self.states.pop();
                     format!("USE {} {}", self.blue.x, self.blue.y)
@@ -162,8 +200,8 @@ impl GameState {
                 msg
             }
             Some(PlayerState::Straw) => {
-                // On va chercher la fraise et la couper
-                let near_straw: Position = self.near(&self.straw);
+                eprintln!("On va chercher la fraise et la couper");
+                let near_straw: Position = self.near_empty_space(&self.straw);
                 let msg = if self.player == near_straw {
                     self.states.pop();
                     format!("USE {} {}", self.straw.x, self.straw.y)
@@ -173,8 +211,8 @@ impl GameState {
                 msg
             }
             Some(PlayerState::Chop) => {
-                // On va couper la fraise
-                let near_chop: Position = self.near(&self.chop);
+                eprintln!("On va couper la fraise");
+                let near_chop: Position = self.near_empty_space(&self.chop);
                 let msg = if self.player == near_chop {
                     self.states.pop();
                     format!("USE {} {}", self.chop.x, self.chop.y)
@@ -184,8 +222,8 @@ impl GameState {
                 msg
             }
             Some(PlayerState::Deliver) => {
-                // On donne au client
-                let near_window: Position = self.near(&self.window);
+                eprintln!("On donne au client");
+                let near_window: Position = self.near_empty_space(&self.window);
                 let msg = if self.player == near_window {
                     self.states.pop();
                     format!("USE {} {}", self.window.x, self.window.y)
@@ -195,16 +233,48 @@ impl GameState {
                 msg
             }
             Some(PlayerState::TakePlate) => {
-                todo!()
+                eprintln!("On recupere l'assiette sur le plan de travail");
+                let near_saved_workspace: Position = self.near_empty_space(&self.saved_workspace);
+                let msg = if self.player == near_saved_workspace {
+                    self.states.pop();
+                    format!("USE {} {}", self.saved_workspace.x, self.saved_workspace.y)
+                } else {
+                    format!("MOVE {} {}", near_saved_workspace.x, near_saved_workspace.y)
+                };
+                msg
             }
+
             Some(PlayerState::PutPlate) => {
-                todo!()
+                eprintln!("On pose l'assiette sur le plan de travail");
+                let msg = if self.set_workspace() {
+                    self.states.pop();
+                    format!("USE {} {}", self.saved_workspace.x, self.saved_workspace.y)
+                } else {
+                    unreachable!()
+                };
+                msg
             }
             Some(PlayerState::Oven) => {
-                todo!()
+                eprintln!("On fait cuire");
+                let near_oven: Position = self.near_empty_space(&self.oven);
+                let msg = if self.player == near_oven {
+                    self.states.pop();
+                    format!("USE {} {}", self.oven.x, self.oven.y)
+                } else {
+                    format!("MOVE {} {}", near_oven.x, near_oven.y)
+                };
+                msg
             }
             Some(PlayerState::Dough) => {
-                todo!()
+                eprintln!("On va chercher la pate");
+                let near_dough: Position = self.near_empty_space(&self.dough);
+                let msg = if self.player == near_dough {
+                    self.states.pop();
+                    format!("USE {} {}", self.dough.x, self.dough.y)
+                } else {
+                    format!("MOVE {} {}", near_dough.x, near_dough.y)
+                };
+                msg
             }
             _ => todo!(),
         }
@@ -226,7 +296,9 @@ fn main() {
     let mut game = GameState {
         states: Vec::new(),
         empty_space: Vec::new(),
+        workspace: Vec::new(),
         // Put item in inaccessible position for init
+        saved_workspace: Position { x: 42, y: 42 },
         player: Position { x: 42, y: 42 },
         dish: Position { x: 42, y: 42 },
         window: Position { x: 42, y: 42 },
@@ -273,6 +345,10 @@ fn main() {
         eprintln!("kitchen line {}: {}", y, kitchen_line);
         for (x, c) in kitchen_line.chars().enumerate() {
             match c {
+                '#' => game.workspace.push(Position { x, y }),
+                '0' => game.empty_space.push(Position { x, y }),
+                '1' => game.empty_space.push(Position { x, y }),
+                '.' => game.empty_space.push(Position { x, y }),
                 'D' => game.dish = Position { x, y },
                 'W' => game.window = Position { x, y },
                 'B' => game.blue = Position { x, y },
@@ -281,9 +357,6 @@ fn main() {
                 'H' => game.dough = Position { x, y },
                 'C' => game.chop = Position { x, y },
                 'O' => game.oven = Position { x, y },
-                '.' => game.empty_space.push(Position { x, y }),
-                '0' => game.empty_space.push(Position { x, y }),
-                '1' => game.empty_space.push(Position { x, y }),
                 _ => continue,
             }
         }
