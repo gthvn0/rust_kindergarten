@@ -9,7 +9,9 @@
  *  kitchen line: #.##.####.#
  *  kitchen line: #.........#
  *  kitchen line: #####W#####
- * *
+ *
+ * (0, 0) is the top left
+ *
  *  ACTIONS:
  *      - MOVE x y
  *      - USE x y
@@ -18,6 +20,34 @@
  *            anything allow you to take the object
  *          - on dessert with a plate will load the dessert
  *      - WAIT: skip its turn
+ *
+ * customer item: DISH-BLUEBERRIES-CHOPPED_STRAWBERRIES  award: 850
+ * customer item: DISH-CHOPPED_STRAWBERRIES-ICE_CREAM  award: 800
+ * customer item: DISH-ICE_CREAM-CHOPPED_STRAWBERRIES-BLUEBERRIES  award: 1050
+ * customer item: DISH-CROISSANT-BLUEBERRIES-ICE_CREAM  award: 1300
+ * customer item: DISH-BLUEBERRIES-CHOPPED_STRAWBERRIES-CROISSANT  award: 1500
+ * customer item: DISH-ICE_CREAM-CROISSANT  award: 1050
+ * customer item: DISH-ICE_CREAM-CHOPPED_STRAWBERRIES  award: 800
+ * customer item: DISH-CROISSANT-CHOPPED_STRAWBERRIES  award: 1250
+ * customer item: DISH-CROISSANT-CHOPPED_STRAWBERRIES-ICE_CREAM  award: 1450
+ * customer item: DISH-ICE_CREAM-CHOPPED_STRAWBERRIES  award: 800
+ * customer item: DISH-ICE_CREAM-CROISSANT-BLUEBERRIES-CHOPPED_STRAWBERRIES  award: 1700
+ * customer item: DISH-BLUEBERRIES-CHOPPED_STRAWBERRIES-ICE_CREAM-CROISSANT  award: 1700
+ * customer item: DISH-CROISSANT-ICE_CREAM  award: 1050
+ * customer item: DISH-BLUEBERRIES-CHOPPED_STRAWBERRIES-ICE_CREAM  award: 1050
+ * customer item: DISH-ICE_CREAM-CHOPPED_STRAWBERRIES  award: 800
+ * customer item: DISH-CHOPPED_STRAWBERRIES-CROISSANT  award: 1250
+ * customer item: DISH-ICE_CREAM-CROISSANT-CHOPPED_STRAWBERRIES-BLUEBERRIES  award: 1700
+ * customer item: DISH-ICE_CREAM-BLUEBERRIES  award: 650
+ * customer item: DISH-BLUEBERRIES-CHOPPED_STRAWBERRIES-CROISSANT-ICE_CREAM  award: 1700
+ * customer item: DISH-ICE_CREAM-CHOPPED_STRAWBERRIES  award: 800
+ *
+ * => States:
+ * CHOPPED_STRAWBERRIES
+ * CROISSANT
+ * DISH
+ * BLUEBERRIES
+ * ICE_CREAM
  */
 
 /********************************************************
@@ -27,6 +57,21 @@
  * - [X] Apply to the game
  ********************************************************/
 use std::io;
+
+const KITCHEN_X: usize = 11;
+const KITCHEN_Y: usize = 7;
+const WS_CHAR: char = '#';
+const P0_CHAR: char = '0';
+const P1_CHAR: char = '1';
+const ES_CHAR: char = '.';
+const DI_CHAR: char = 'D';
+const WI_CHAR: char = 'W';
+const BL_CHAR: char = 'B';
+const IC_CHAR: char = 'I';
+const ST_CHAR: char = 'S';
+const DO_CHAR: char = 'H';
+const CH_CHAR: char = 'C';
+const OV_CHAR: char = 'O';
 
 macro_rules! parse_input {
     ($x:expr, $t:ident) => {
@@ -40,244 +85,367 @@ struct Position {
     y: usize,
 }
 
-#[derive(Debug)]
-enum PlayerState {
+#[allow(non_camel_case_types)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
+enum CustomerItem {
+    DISH,
+    CHOPPED_STRAWBERRIES,
+    CROISSANT,
+    DOUGH,
+    STRAW,
+    OVEN,
+    BLUEBERRIES,
+    ICE_CREAM,
+    NONE,
+}
+
+#[derive(Debug, PartialEq, Clone, Copy)]
+enum Tile {
+    WorkSpace,
+    EmptySpace,
     Dish,
-    PutPlate,
-    TakePlate,
+    Window,
+    Blue,
     Ice,
     Straw,
-    Chop,
     Dough,
+    Chop,
     Oven,
-    Blue,
-    Deliver,
 }
 
 #[derive(Debug)]
 struct GameState {
-    states: Vec<PlayerState>, // current state is the last item
-    empty_space: Vec<Position>,
-    workspace: Vec<Position>,
-    saved_workspace: Position,
-    player: Position,
-    dish: Position,
-    window: Position,
-    ice: Position,
-    blue: Position,
-    straw: Position,
-    dough: Position,
-    chop: Position,
-    oven: Position,
+    kitchen: [[Tile; KITCHEN_X]; KITCHEN_Y],
+    fsm: Vec<CustomerItem>,
+    player_states: Vec<CustomerItem>,
+    player_pos: Option<Position>,
+    table_items: Vec<(Position, CustomerItem)>,
+    oven_timer: usize,
+    croissant_ready: bool,
 }
 
-//macro_rules! use_or_move {
-//    ($self:ident, $item:ident) => {
-//        let near_item: Position = $self.near_empty_space(&$self.$item);
-//        let msg = if $self.player == near_item {
-//            $self.states.pop();
-//            format!("USE {} {}", $self.$item.x, $self.$item.y)
-//        } else {
-//            format!("MOVE {} {}", near_item.x, near_item.y)
-//        };
-//        msg
-//    };
-//}
-
 impl GameState {
-    // Takes a string like "DISH-ICE_CREAM-CHOPPED_STRAWBERRIES"
-    // and generates states => [Deliver, Straw, Ice, Dish]
-    fn set_states(&mut self, s: &String) {
-        self.states = Vec::new();
-
-        for item in s.split('-').into_iter().map(|s| s.to_uppercase()) {
-            match &item[..] {
-                "DISH" => self.states.push(PlayerState::Dish),
-                "CROISSANT" => {
-                    self.states.push(PlayerState::PutPlate);
-                    self.states.push(PlayerState::Oven);
-                    self.states.push(PlayerState::Dough);
-                    self.states.push(PlayerState::TakePlate);
-                }
-                "CHOPPED_STRAWBERRIES" => {
-                    self.states.push(PlayerState::PutPlate);
-                    self.states.push(PlayerState::Straw);
-                    self.states.push(PlayerState::Chop);
-                    self.states.push(PlayerState::TakePlate);
-                }
-                "ICE_CREAM" => self.states.push(PlayerState::Ice),
-                "BLUEBERRIES" => self.states.push(PlayerState::Blue),
-                _ => unreachable!(),
-            }
+    fn new() -> Self {
+        Self {
+            kitchen: [[Tile::EmptySpace; KITCHEN_X]; KITCHEN_Y],
+            fsm: Vec::new(),
+            player_states: Vec::new(),
+            player_pos: None,
+            table_items: Vec::new(),
+            oven_timer: 0,
+            croissant_ready: false,
         }
-
-        self.states.push(PlayerState::Deliver);
-        // And now we just need to reverse it to get the right order
-        self.states.reverse();
-        eprintln!("{:#?}", self.states);
     }
 
-    fn near_empty_space(&self, item: &Position) -> Position {
-        // Return the first empty space near the item
-        // There is height possible values
-        let check_pos: [(usize, usize); 8] = [
-            (item.x - 1, item.y - 1),
-            (item.x, item.y - 1),
-            (item.x + 1, item.y - 1),
-            (item.x - 1, item.y),
-            (item.x + 1, item.y),
-            (item.x - 1, item.y + 1),
-            (item.x, item.y + 1),
-            (item.x + 1, item.y + 1),
-        ];
+    fn str_to_customer_item(s: &str) -> CustomerItem {
+        match s {
+            "NONE" => CustomerItem::NONE,
+            "CHOPPED_STRAWBERRIES" => CustomerItem::CHOPPED_STRAWBERRIES,
+            "CROISSANT" => CustomerItem::CROISSANT,
+            "DISH" => CustomerItem::DISH,
+            "DOUGH" => CustomerItem::DOUGH,
+            "BLUEBERRIES" => CustomerItem::BLUEBERRIES,
+            "ICE_CREAM" => CustomerItem::ICE_CREAM,
+            "STRAWBERRIES" => CustomerItem::STRAW,
+            "OVEN" => CustomerItem::OVEN,
+            _ => unreachable!(),
+        }
+    }
 
-        for (a, b) in check_pos.iter() {
-            if self.empty_space.contains(&Position { x: *a, y: *b }) {
-                return Position { x: *a, y: *b };
+    // If the item is in the list of table items it returns its Position,
+    // Otherwise it returns None
+    fn item_on_table(&self, item: &CustomerItem) -> Option<Position> {
+        for (pos, ci) in self.table_items.iter() {
+            if item == ci {
+                return Some(Position { x: pos.x, y: pos.y });
             }
         }
-        // If we are here it means that we can not catch the item...
+
+        None
+    }
+
+    fn position_on_table(&self, p: &Position) -> Option<CustomerItem> {
+        for (pos, item) in self.table_items.iter() {
+            if pos.x == p.x && pos.y == p.y {
+                return Some(*item);
+            }
+        }
+
+        None
+    }
+
+    // Find a free place on workspace
+    fn get_position_around_us(&self) -> Vec<Position> {
+        let mut v: Vec<Position> = Vec::new();
+        let ppos = if let Some(p) = &self.player_pos {
+            p
+        } else {
+            unreachable!()
+        };
+
+        // We check all possible values and only keep valid ones
+        if ppos.x as i32 - 1 >= 0 && ppos.y as i32 - 1 >= 0 {
+            v.push(Position {
+                x: ppos.x - 1,
+                y: ppos.y - 1,
+            });
+        }
+        if ppos.y as i32 - 1 >= 0 {
+            v.push(Position {
+                x: ppos.x,
+                y: ppos.y - 1,
+            });
+        }
+        if ppos.x + 1 < KITCHEN_X && ppos.y as i32 - 1 >= 0 {
+            v.push(Position {
+                x: ppos.x + 1,
+                y: ppos.y - 1,
+            });
+        }
+
+        if ppos.x as i32 - 1 >= 0 {
+            v.push(Position {
+                x: ppos.x - 1,
+                y: ppos.y,
+            });
+        }
+        if ppos.x + 1 < KITCHEN_X {
+            v.push(Position {
+                x: ppos.x + 1,
+                y: ppos.y,
+            });
+        }
+
+        if ppos.x + 1 < KITCHEN_X && ppos.y as i32 - 1 >= 0 {
+            v.push(Position {
+                x: ppos.x + 1,
+                y: ppos.y - 1,
+            });
+        }
+        if ppos.x + 1 < KITCHEN_X {
+            v.push(Position {
+                x: ppos.x + 1,
+                y: ppos.y,
+            });
+        }
+        if ppos.x + 1 < KITCHEN_X && ppos.y + 1 < KITCHEN_Y {
+            v.push(Position {
+                x: ppos.x + 1,
+                y: ppos.y + 1,
+            });
+        }
+
+        v
+    }
+
+    fn get_empty_workspace_around_us(&self) -> Position {
+        let pos_around = self.get_position_around_us();
+        eprintln!("pos around {:?}", pos_around);
+        for p in pos_around.iter() {
+            if self.kitchen[p.y][p.x] == Tile::WorkSpace {
+                match self.position_on_table(p) {
+                    None => return Position { x: p.x, y: p.y },
+                    _ => continue,
+                }
+            }
+        }
         unreachable!()
     }
 
-    fn set_workspace(&mut self) -> bool {
-        // Set saved_workspace to the first available workspace around us.
-        let check_pos: [(usize, usize); 8] = [
-            (self.player.x - 1, self.player.y - 1),
-            (self.player.x, self.player.y - 1),
-            (self.player.x + 1, self.player.y - 1),
-            (self.player.x - 1, self.player.y),
-            (self.player.x + 1, self.player.y),
-            (self.player.x - 1, self.player.y + 1),
-            (self.player.x, self.player.y + 1),
-            (self.player.x + 1, self.player.y + 1),
-        ];
+    // Takes a string like "DISH-ICE_CREAM-CHOPPED_STRAWBERRIES"
+    // and generates states => [ICE_CREAM, DISH, CHOPPED_STRAWBERRIES]
+    fn gen_vec_of_customer_item(s: &str) -> Vec<CustomerItem> {
+        eprintln!("Str: {}", s);
 
-        for (a, b) in check_pos.iter() {
-            if self.workspace.contains(&Position { x: *a, y: *b }) {
-                self.saved_workspace = Position { x: *a, y: *b };
-                eprintln!("savec workspace at {} {}", *a, *b);
-                return true;
+        let mut v: Vec<CustomerItem> = s.split('-').map(GameState::str_to_customer_item).collect();
+        // Now we sort to have complex preparation first
+        v.sort_unstable();
+        v.reverse(); // reverse because we will pop to get next state
+        v
+    }
+
+    fn set_fsm(&mut self, s: &str) {
+        self.fsm = GameState::gen_vec_of_customer_item(s);
+        eprintln!("{:#?}", self.fsm);
+    }
+
+    // Set tile in the kitchen
+    fn set_tile(&mut self, p: Position, c: char) {
+        match c {
+            WS_CHAR => self.kitchen[p.y][p.x] = Tile::WorkSpace,
+            P0_CHAR => self.kitchen[p.y][p.x] = Tile::EmptySpace,
+            P1_CHAR => self.kitchen[p.y][p.x] = Tile::EmptySpace,
+            ES_CHAR => self.kitchen[p.y][p.x] = Tile::EmptySpace,
+            DI_CHAR => self.kitchen[p.y][p.x] = Tile::Dish,
+            WI_CHAR => self.kitchen[p.y][p.x] = Tile::Window,
+            BL_CHAR => self.kitchen[p.y][p.x] = Tile::Blue,
+            IC_CHAR => self.kitchen[p.y][p.x] = Tile::Ice,
+            ST_CHAR => self.kitchen[p.y][p.x] = Tile::Straw,
+            DO_CHAR => self.kitchen[p.y][p.x] = Tile::Dough,
+            CH_CHAR => self.kitchen[p.y][p.x] = Tile::Chop,
+            OV_CHAR => self.kitchen[p.y][p.x] = Tile::Oven,
+            _ => todo!(),
+        }
+    }
+
+    // Get the tile at a given position
+    fn get_tile(&self, p: &Position) -> Tile {
+        match self.kitchen[p.y][p.x] {
+            Tile::WorkSpace => Tile::WorkSpace,
+            Tile::EmptySpace => Tile::EmptySpace,
+            Tile::Dish => Tile::Dish,
+            Tile::Window => Tile::Window,
+            Tile::Blue => Tile::Blue,
+            Tile::Ice => Tile::Ice,
+            Tile::Straw => Tile::Straw,
+            Tile::Dough => Tile::Dough,
+            Tile::Chop => Tile::Chop,
+            Tile::Oven => Tile::Oven,
+        }
+    }
+
+    // Get the position of a given item
+    fn get_tile_position(&self, t: Tile) -> Position {
+        for y in 0..KITCHEN_Y {
+            for x in 0..KITCHEN_X {
+                let pos = Position { x, y };
+                if self.get_tile(&pos) == t {
+                    return pos;
+                }
             }
         }
+        unreachable!();
+    }
 
-        false
+    fn display(&self) {
+        for y in 0..KITCHEN_Y {
+            for x in 0..KITCHEN_X {
+                let c = match self.get_tile(&Position { x, y }) {
+                    Tile::WorkSpace => WS_CHAR,
+                    Tile::EmptySpace => ES_CHAR,
+                    Tile::Dish => DI_CHAR,
+                    Tile::Window => WI_CHAR,
+                    Tile::Blue => BL_CHAR,
+                    Tile::Ice => IC_CHAR,
+                    Tile::Straw => ST_CHAR,
+                    Tile::Dough => DO_CHAR,
+                    Tile::Chop => CH_CHAR,
+                    Tile::Oven => OV_CHAR,
+                };
+                eprint!("{}", c);
+            }
+            eprintln!("");
+        }
     }
 
     fn get_action(&mut self) -> String {
-        match self.states.last() {
-            Some(PlayerState::Dish) => {
-                eprintln!("On va chercher une assiette");
-                let near_dish: Position = self.near_empty_space(&self.dish);
-                let msg = if self.player == near_dish {
-                    self.states.pop();
-                    format!("USE {} {}", self.dish.x, self.dish.y)
-                } else {
-                    format!("MOVE {} {}", near_dish.x, near_dish.y)
-                };
-                msg
-            }
-            Some(PlayerState::Ice) => {
-                eprintln!("On va chercher l'icecream");
-                let near_ice: Position = self.near_empty_space(&self.ice);
-                let msg = if self.player == near_ice {
-                    self.states.pop();
-                    format!("USE {} {}", self.ice.x, self.ice.y)
-                } else {
-                    format!("MOVE {} {}", near_ice.x, near_ice.y)
-                };
-                msg
-            }
-            Some(PlayerState::Blue) => {
-                eprintln!("On va chercher le blueberry");
-                let near_blue: Position = self.near_empty_space(&self.blue);
-                let msg = if self.player == near_blue {
-                    self.states.pop();
-                    format!("USE {} {}", self.blue.x, self.blue.y)
-                } else {
-                    format!("MOVE {} {}", near_blue.x, near_blue.y)
-                };
-                msg
-            }
-            Some(PlayerState::Straw) => {
-                eprintln!("On va chercher la fraise et la couper");
-                let near_straw: Position = self.near_empty_space(&self.straw);
-                let msg = if self.player == near_straw {
-                    self.states.pop();
-                    format!("USE {} {}", self.straw.x, self.straw.y)
-                } else {
-                    format!("MOVE {} {}", near_straw.x, near_straw.y)
-                };
-                msg
-            }
-            Some(PlayerState::Chop) => {
-                eprintln!("On va couper la fraise");
-                let near_chop: Position = self.near_empty_space(&self.chop);
-                let msg = if self.player == near_chop {
-                    self.states.pop();
-                    format!("USE {} {}", self.chop.x, self.chop.y)
-                } else {
-                    format!("MOVE {} {}", near_chop.x, near_chop.y)
-                };
-                msg
-            }
-            Some(PlayerState::Deliver) => {
-                eprintln!("On donne au client");
-                let near_window: Position = self.near_empty_space(&self.window);
-                let msg = if self.player == near_window {
-                    self.states.pop();
-                    format!("USE {} {}", self.window.x, self.window.y)
-                } else {
-                    format!("MOVE {} {}", near_window.x, near_window.y)
-                };
-                msg
-            }
-            Some(PlayerState::TakePlate) => {
-                eprintln!("On recupere l'assiette sur le plan de travail");
-                let near_saved_workspace: Position = self.near_empty_space(&self.saved_workspace);
-                let msg = if self.player == near_saved_workspace {
-                    self.states.pop();
-                    format!("USE {} {}", self.saved_workspace.x, self.saved_workspace.y)
-                } else {
-                    format!("MOVE {} {}", near_saved_workspace.x, near_saved_workspace.y)
-                };
-                msg
-            }
+        let mut current_state = if let Some(s) = self.fsm.last() {
+            s
+        } else {
+            unreachable!()
+        };
 
-            Some(PlayerState::PutPlate) => {
-                eprintln!("On pose l'assiette sur le plan de travail");
-                let msg = if self.set_workspace() {
-                    self.states.pop();
-                    format!("USE {} {}", self.saved_workspace.x, self.saved_workspace.y)
-                } else {
-                    unreachable!()
-                };
-                msg
-            }
-            Some(PlayerState::Oven) => {
-                eprintln!("On fait cuire");
-                let near_oven: Position = self.near_empty_space(&self.oven);
-                let msg = if self.player == near_oven {
-                    self.states.pop();
-                    format!("USE {} {}", self.oven.x, self.oven.y)
-                } else {
-                    format!("MOVE {} {}", near_oven.x, near_oven.y)
-                };
-                msg
-            }
-            Some(PlayerState::Dough) => {
-                eprintln!("On va chercher la pate");
-                let near_dough: Position = self.near_empty_space(&self.dough);
-                let msg = if self.player == near_dough {
-                    self.states.pop();
-                    format!("USE {} {}", self.dough.x, self.dough.y)
-                } else {
-                    format!("MOVE {} {}", near_dough.x, near_dough.y)
-                };
-                msg
-            }
-            _ => todo!(),
+        eprintln!("Player state: {:?}", self.player_states);
+        eprintln!("Current state: {:?}", *current_state);
+
+        if self.player_states.contains(current_state) {
+            // Go to next state
+            self.fsm.pop();
+            current_state = if let Some(s) = self.fsm.last() {
+                s
+            } else {
+                &CustomerItem::NONE
+            };
         }
+
+        eprintln!("Updated current state: {:?}", *current_state);
+
+        let msg: String = match *current_state {
+            CustomerItem::NONE => "WAIT".to_string(),
+            CustomerItem::DISH => {
+                let dish_pos = self.get_tile_position(Tile::Dish);
+                format!("USE {} {}", dish_pos.x, dish_pos.y)
+            }
+            CustomerItem::BLUEBERRIES => {
+                let blueberry_pos = self.get_tile_position(Tile::Blue);
+                format!("USE {} {}", blueberry_pos.x, blueberry_pos.y)
+            }
+            CustomerItem::ICE_CREAM => {
+                let ice_cream_pos = self.get_tile_position(Tile::Ice);
+                format!("USE {} {}", ice_cream_pos.x, ice_cream_pos.y)
+            }
+            CustomerItem::CHOPPED_STRAWBERRIES => {
+                // Before cooking a croissant check that there is no croissant already
+                // cooked.
+                let index = self
+                    .table_items
+                    .iter()
+                    .find(|(_, item)| item == &CustomerItem::CHOPPED_STRAWBERRIES);
+                if let Some(index) = index {
+                    format!("USE {} {}", index.0.x, index.0.y)
+                } else {
+                    // We need to hold STRAW before using chop
+                    if self.player_states.contains(&CustomerItem::STRAW) {
+                        let chop_pos = self.get_tile_position(Tile::Chop);
+                        format!("USE {} {}", chop_pos.x, chop_pos.y)
+                    } else {
+                        let straw_pos = self.get_tile_position(Tile::Straw);
+                        format!("USE {} {}", straw_pos.x, straw_pos.y)
+                    }
+                }
+            }
+            CustomerItem::CROISSANT => {
+                // If we are currently cooking a croissant let's continue
+                if self.player_states.contains(&CustomerItem::DOUGH) {
+                    let oven_pos = self.get_tile_position(Tile::Oven);
+                    format!("USE {} {}", oven_pos.x, oven_pos.y)
+                } else {
+                    // Before cooking a croissant check that there is no croissant already
+                    // cooked.
+                    let index = self
+                        .table_items
+                        .iter()
+                        .find(|(_, item)| item == &CustomerItem::CROISSANT);
+                    if let Some(index) = index {
+                        format!("USE {} {}", index.0.x, index.0.y)
+                    } else if self.oven_timer != 0 {
+                        // Check if there is already something in preparation in the oven
+                        self.croissant_ready = true; // we will take it when timer will be equal to 0
+                        format!("WAIT")
+                    } else if self.croissant_ready {
+                        self.croissant_ready = false;
+                        let oven_pos = self.get_tile_position(Tile::Oven);
+                        format!("USE {} {}", oven_pos.x, oven_pos.y)
+                    } else {
+                        // At this point We need to cook one.
+                        // So take the dough and then put it in the oven. But before make sure
+                        // that we are not holding something. If we are holding something we need
+                        // to put it on the workspace and add the step in the FSM.
+                        if !self.player_states.contains(&CustomerItem::NONE) {
+                            let top_state = if let Some(s) = self.fsm.pop() {
+                                s
+                            } else {
+                                unreachable!()
+                            };
+                            self.fsm.append(&mut self.player_states);
+                            self.fsm.push(top_state);
+
+                            let pos = self.get_empty_workspace_around_us();
+                            format!("USE {} {}", pos.x, pos.y)
+                        } else {
+                            let dough_pos = self.get_tile_position(Tile::Dough);
+                            format!("USE {} {}", dough_pos.x, dough_pos.y)
+                        }
+                    }
+                }
+            }
+            _ => {
+                eprintln!("Unknown state {:?}", *current_state);
+                todo!()
+            }
+        };
+
+        msg
     }
 }
 
@@ -293,22 +461,7 @@ fn main() {
     /***
      * Game State
      */
-    let mut game = GameState {
-        states: Vec::new(),
-        empty_space: Vec::new(),
-        workspace: Vec::new(),
-        // Put item in inaccessible position for init
-        saved_workspace: Position { x: 42, y: 42 },
-        player: Position { x: 42, y: 42 },
-        dish: Position { x: 42, y: 42 },
-        window: Position { x: 42, y: 42 },
-        blue: Position { x: 42, y: 42 },
-        ice: Position { x: 42, y: 42 },
-        straw: Position { x: 42, y: 42 },
-        dough: Position { x: 42, y: 42 },
-        chop: Position { x: 42, y: 42 },
-        oven: Position { x: 42, y: 42 },
-    };
+    let mut game = GameState::new();
 
     /***********************************************************
      * INFORMATION ABOUT CUSTOMERS
@@ -327,11 +480,12 @@ fn main() {
         let inputs = input_line.split(" ").collect::<Vec<_>>();
         let customer_item = inputs[0].trim().to_string(); // the food the customer is waiting for
         let customer_award = parse_input!(inputs[1], i32); // the number of points awarded for delivering the food
+
         eprintln!(
             "customer item: {}  award: {}",
             customer_item, customer_award
         );
-        // customer item: DISH-BLUEBERRIES-ICE_CREAM  award: 650
+        //customer item: DISH-BLUEBERRIES-ICE_CREAM  award: 650
     }
 
     /***********************************************************
@@ -342,34 +496,22 @@ fn main() {
         let mut input_line = String::new();
         io::stdin().read_line(&mut input_line).unwrap();
         let kitchen_line = input_line.trim_matches('\n').to_string();
-        eprintln!("kitchen line {}: {}", y, kitchen_line);
+        //eprintln!("kitchen line {}: {}", y, kitchen_line);
         for (x, c) in kitchen_line.chars().enumerate() {
-            match c {
-                '#' => game.workspace.push(Position { x, y }),
-                '0' => game.empty_space.push(Position { x, y }),
-                '1' => game.empty_space.push(Position { x, y }),
-                '.' => game.empty_space.push(Position { x, y }),
-                'D' => game.dish = Position { x, y },
-                'W' => game.window = Position { x, y },
-                'B' => game.blue = Position { x, y },
-                'I' => game.ice = Position { x, y },
-                'S' => game.straw = Position { x, y },
-                'H' => game.dough = Position { x, y },
-                'C' => game.chop = Position { x, y },
-                'O' => game.oven = Position { x, y },
-                _ => continue,
-            }
+            game.set_tile(Position { x, y }, c);
         }
     }
 
-    eprintln!("Dish at {:?}", game.dish);
-    eprintln!("Window at {:?}", game.window);
-    eprintln!("Blueberry at {:?}", game.blue);
-    eprintln!("IceCream at {:?}", game.ice);
-    eprintln!("Strawberry at {:?}", game.straw);
-    eprintln!("Dough at {:?}", game.dough);
-    eprintln!("Chop at {:?}", game.chop);
-    eprintln!("Oven at {:?}", game.oven);
+    // At this point the kitchen has been setup
+    eprintln!("Window at {:?}", game.get_tile_position(Tile::Window));
+    eprintln!("Blueberry at {:?}", game.get_tile_position(Tile::Blue));
+    eprintln!("IceCream at {:?}", game.get_tile_position(Tile::Ice));
+    eprintln!("Strawberry at {:?}", game.get_tile_position(Tile::Straw));
+    eprintln!("Dough at {:?}", game.get_tile_position(Tile::Dough));
+    eprintln!("Chop at {:?}", game.get_tile_position(Tile::Chop));
+    eprintln!("Oven at {:?}", game.get_tile_position(Tile::Oven));
+
+    game.display();
 
     /***********************************************************
      * MAIN LOOP
@@ -381,21 +523,21 @@ fn main() {
     loop {
         let mut input_line = String::new();
         io::stdin().read_line(&mut input_line).unwrap();
-        let turns_remaining = parse_input!(input_line, i32);
-        eprintln!("Turns remaining: {}", turns_remaining);
-        // Turns remaining: 187
+        let _turns_remaining = parse_input!(input_line, i32);
+        //eprintln!("Turns remaining: {}", turns_remaining);
 
         let mut input_line = String::new();
         io::stdin().read_line(&mut input_line).unwrap();
         let inputs = input_line.split(" ").collect::<Vec<_>>();
 
-        game.player = Position {
+        // Update the position of the player
+        game.player_pos = Some(Position {
             x: parse_input!(inputs[0], usize),
             y: parse_input!(inputs[1], usize),
-        };
+        });
 
-        let player_state = inputs[2].trim();
-        eprintln!("state == {}", player_state);
+        game.player_states = GameState::gen_vec_of_customer_item(inputs[2].trim());
+        eprintln!("Player state {:?}", game.player_states);
 
         let mut input_line = String::new();
         io::stdin().read_line(&mut input_line).unwrap();
@@ -419,19 +561,25 @@ fn main() {
             let mut input_line = String::new();
             io::stdin().read_line(&mut input_line).unwrap();
             let inputs = input_line.split(" ").collect::<Vec<_>>();
-            let table_x = parse_input!(inputs[0], i32);
-            let table_y = parse_input!(inputs[1], i32);
+            let table_x = parse_input!(inputs[0], usize);
+            let table_y = parse_input!(inputs[1], usize);
             let item = inputs[2].trim().to_string();
-            eprintln!("table ({}, {}), item {}", table_x, table_y, item);
-            // table (9, 6), item DISH
+            game.table_items.push((
+                Position {
+                    x: table_x,
+                    y: table_y,
+                },
+                GameState::str_to_customer_item(&item),
+            ));
         }
+        eprintln!("table_items: {:?}", game.table_items);
 
         let mut input_line = String::new();
         io::stdin().read_line(&mut input_line).unwrap();
         let inputs = input_line.split(" ").collect::<Vec<_>>();
         let oven_contents = inputs[0].trim().to_string(); // ignore until wood 1 league
-        let oven_timer = parse_input!(inputs[1], i32);
-        eprintln!("oven contents {}, timer {}", oven_contents, oven_timer);
+        game.oven_timer = parse_input!(inputs[1], usize);
+        eprintln!("oven contents {}, timer {}", oven_contents, game.oven_timer);
         // oven contents NONE, timer 0
 
         let mut input_line = String::new();
@@ -450,17 +598,36 @@ fn main() {
             let customer_award = parse_input!(inputs[1], i32);
             eprintln!("customer item: {} award: {}", customer_item, customer_award);
             if customer_award > max_award {
+                eprintln!("Take this one");
                 max_award = customer_award;
                 order = customer_item;
             }
         }
-        eprintln!("items: {}", order);
+
+        eprintln!("selected order: {:#?}", order);
         // customer item: DISH-BLUEBERRIES-ICE_CREAM  award: 638
 
         // get state new order if empty
-        if game.states.is_empty() {
-            game.set_states(&order);
+        if order.is_empty() {
+            // Wait for a better order
+            println!("WAIT");
+            continue;
         }
+
+        if game.fsm.is_empty() {
+            // Deliver and take a new order
+            if game.player_states.contains(&CustomerItem::NONE) {
+                game.set_fsm(&order);
+            } else {
+                let win_pos = game.get_tile_position(Tile::Window);
+                println!("USE {} {}", win_pos.x, win_pos.y);
+                continue;
+            }
+        }
+
+        game.display();
+
+        eprintln!("FSM: {:#?}", game.fsm);
 
         // Write an action using println!("message...");
         // To debug: eprintln!("Debug message...");
