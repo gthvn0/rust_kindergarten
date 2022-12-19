@@ -60,6 +60,10 @@ cargo new --vcs none codingame
 - Most of exercices are taken from [codingame](https://www.codingame.com)
 - Maybe have a look to [code wars](https://www.codewars.com)
 
+## HTTP Server
+
+- It is part of the [udemy course](https://www.udemy.com/course/rust-fundamentals/) to learn rust.
+
 ## Monads
 
 - Created using:
