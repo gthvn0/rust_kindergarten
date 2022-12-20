@@ -1,3 +1,5 @@
+use std::net::TcpListener;
+
 // Everything is private by default
 // Add pub keyword to make it public
 pub struct Server {
@@ -23,5 +25,7 @@ impl Server {
     // => run takes the ownership of self
     pub fn run(self) {
         println!("Listening on {}", self.addr);
+
+        let listener = TcpListener::bind(&self.addr).unwrap();
     }
 }
