@@ -27,5 +27,17 @@ impl Server {
         println!("Listening on {}", self.addr);
 
         let listener = TcpListener::bind(&self.addr).unwrap();
+
+        // For infinite loop we can use "loop" keyword
+        // It is possible to add label to loop to allow a break or continue from inner loop
+        loop {
+            // block thread until connection occurs
+            match listener.accept() {
+                Ok((_, s)) => {
+                    println!("new client from {}", s)
+                }
+                Err(e) => println!("Connection failed with error {}", e),
+            }
+        }
     }
 }
