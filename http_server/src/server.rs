@@ -37,10 +37,13 @@ impl Server {
                     let mut buf = [0; 1024];
 
                     println!("new client from {}", addr);
-                    stream.read(&mut buf).unwrap();
-
-                    println!("=== BUFFER ===");
-                    println!("{:?}", buf);
+                    match stream.read(&mut buf) {
+                        Ok(n) => {
+                            println!("Read {} bytes", n);
+                            println!("Received: {}", String::from_utf8_lossy(&buf));
+                        },
+                        Err(e) => println!("Failed to read data: {}", e),
+                    }
                 }
                 Err(e) => println!("Connection failed with error {}", e),
             }
