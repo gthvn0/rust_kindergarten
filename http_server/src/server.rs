@@ -1,4 +1,4 @@
-use std::net::TcpListener;
+use std::{net::TcpListener, io::Read};
 
 // Everything is private by default
 // Add pub keyword to make it public
@@ -33,8 +33,14 @@ impl Server {
         loop {
             // block thread until connection occurs
             match listener.accept() {
-                Ok((_, s)) => {
-                    println!("new client from {}", s)
+                Ok((mut stream, addr)) => {
+                    let mut buf = [0; 1024];
+
+                    println!("new client from {}", addr);
+                    stream.read(&mut buf).unwrap();
+
+                    println!("=== BUFFER ===");
+                    println!("{:?}", buf);
                 }
                 Err(e) => println!("Connection failed with error {}", e),
             }
