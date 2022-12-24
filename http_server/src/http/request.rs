@@ -1,6 +1,8 @@
 use super::method::Method;
 use std::error::Error;
 use std::fmt::{Debug, Display, Formatter, Result as FmtResult};
+use std::str;
+use std::str::Utf8Error;
 
 #[allow(dead_code)]
 pub struct Request {
@@ -9,11 +11,19 @@ pub struct Request {
     method: Method,
 }
 
+impl From<Utf8Error> for ParseError {
+    fn from(_: Utf8Error) -> Self {
+        ParseError::InvalidEncoding
+    }
+}
+
 impl TryFrom<&[u8]> for Request {
     type Error = ParseError;
 
-    fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
-        unimplemented!();
+    fn try_from(buf: &[u8]) -> Result<Self, Self::Error> {
+        let _request = str::from_utf8(buf)?;
+
+        unimplemented!()
     }
 }
 
