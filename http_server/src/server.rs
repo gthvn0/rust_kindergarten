@@ -1,3 +1,4 @@
+use crate::Request;
 use std::{net::TcpListener, io::Read};
 
 // Everything is private by default
@@ -41,6 +42,8 @@ impl Server {
                         Ok(n) => {
                             println!("Read {} bytes", n);
                             println!("Received: {}", String::from_utf8_lossy(&buf));
+
+                            let _req = Request::try_from(&buf[..]);
                         },
                         Err(e) => println!("Failed to read data: {}", e),
                     }
