@@ -1,5 +1,5 @@
 use crate::Request;
-use std::{net::TcpListener, io::Read};
+use std::{io::Read, net::TcpListener};
 
 // Everything is private by default
 // Add pub keyword to make it public
@@ -43,8 +43,13 @@ impl Server {
                             println!("Read {} bytes", n);
                             println!("Received: {}", String::from_utf8_lossy(&buf));
 
-                            let _req = Request::try_from(&buf[..]);
-                        },
+                            match Request::try_from(&buf[..]) {
+                                Ok(_req) => {
+                                    unimplemented!()
+                                }
+                                Err(e) => println!("Failed to parse request: {}", e),
+                            }
+                        }
                         Err(e) => println!("Failed to read data: {}", e),
                     }
                 }
