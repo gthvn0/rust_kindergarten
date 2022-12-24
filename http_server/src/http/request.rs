@@ -2,6 +2,7 @@ use super::method::Method;
 use std::error::Error;
 use std::fmt::{Debug, Display, Formatter, Result as FmtResult};
 
+#[allow(dead_code)]
 pub struct Request {
     path: String,
     query_string: Option<String>,
@@ -16,6 +17,7 @@ impl TryFrom<&[u8]> for Request {
     }
 }
 
+#[allow(dead_code)]
 pub enum ParseError {
     InvalidRequest,
     InvalidEncoding,
