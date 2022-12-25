@@ -41,7 +41,6 @@ impl Server {
                     match stream.read(&mut buf) {
                         Ok(n) => {
                             println!("Read {} bytes", n);
-                            println!("Received: {}", String::from_utf8_lossy(&buf));
 
                             match Request::try_from(&buf[..]) {
                                 Ok(_req) => {
