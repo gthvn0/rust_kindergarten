@@ -1,4 +1,7 @@
+use std::str::FromStr;
+
 #[allow(dead_code)]
+#[derive(Debug)]
 pub enum Method {
     GET,
     POST,
@@ -10,3 +13,24 @@ pub enum Method {
     CONNECT,
     TRACE,
 }
+
+impl FromStr for Method {
+    type Err = MethodError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "GET" => return Ok(Method::GET),
+            "POST" => return Ok(Method::POST),
+            "PUT" => return Ok(Method::PUT),
+            "HEAD" => return Ok(Method::HEAD),
+            "DELETE" => return Ok(Method::DELETE),
+            "PATCH" => return Ok(Method::PATCH),
+            "OPTIONS" => return Ok(Method::OPTIONS),
+            "CONNECT" => return Ok(Method::CONNECT),
+            "TRACE" => return Ok(Method::TRACE),
+            _ => return Err(MethodError),
+        }
+    }
+}
+
+pub struct MethodError;
