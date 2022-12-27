@@ -17,30 +17,45 @@ impl From<Utf8Error> for ParseError {
     }
 }
 
+impl From<MethodError> for ParseError {
+    fn from(_: MethodError) -> Self {
+        ParseError::InvalidMethod
+    }
+}
+
 impl TryFrom<&[u8]> for Request {
     type Error = ParseError;
 
     // GET /search?name=abc&sort=1 HTTP/1.1\r\n...HEADERS...
     fn try_from(buf: &[u8]) -> Result<Self, Self::Error> {
+        // First we get a slice of string from the array of bytes
         let request = str::from_utf8(buf)?;
 
         println!("request: {}", request);
 
+        // Now we can extract the different part from the slice of string
         let (method, request) = get_next_word(request).ok_or(ParseError::InvalidRequest)?;
         let (path, request) = get_next_word(request).ok_or(ParseError::InvalidRequest)?;
         let (protocol, _) = get_next_word(request).ok_or(ParseError::InvalidRequest)?;
 
+        println!("Checking protocol");
+        // we only support HTTP 1.1
         if protocol != "HTTP/1.1" {
             return Err(ParseError::InvalidProtocol);
         }
 
-        unimplemented!()
+        // Now we want to transform the method to a Method
+        let method: Method = method.parse()?;
+
+        println!("method: {:?}", method);
+        println!("path: {:?}", path);
+        todo!()
     }
 }
 
 fn get_next_word(request: &str) -> Option<(&str, &str)> {
     for (i, c) in request.chars().enumerate() {
-        if c == ' ' || c == '\r' {
+        if c == ' ' || c == '\r' || c == '\n' {
             return Some((&request[..i], &request[i + 1..]));
         }
     }
