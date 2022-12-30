@@ -4,9 +4,9 @@ use std::fmt::{Debug, Display, Formatter, Result as FmtResult};
 use std::str;
 use std::str::Utf8Error;
 
-pub struct Request {
-    path: String,
-    query_string: Option<String>,
+pub struct Request<'buf> {
+    path: &'buf str,
+    query_string: Option<&'buf str>,
     method: Method,
 }
 
@@ -22,11 +22,11 @@ impl From<MethodError> for ParseError {
     }
 }
 
-impl TryFrom<&[u8]> for Request {
+impl<'buf> TryFrom<&'buf [u8]> for Request<'buf> {
     type Error = ParseError;
 
     // GET /search?name=abc&sort=1 HTTP/1.1\r\n...HEADERS...
-    fn try_from(buf: &[u8]) -> Result<Self, Self::Error> {
+    fn try_from(buf: &'buf [u8]) -> Result<Request<'buf>, Self::Error> {
         // First we get a slice of string from the array of bytes
         let request = str::from_utf8(buf)?;
 
@@ -54,12 +54,9 @@ impl TryFrom<&[u8]> for Request {
             path = &path[..i];
         }
 
-        Ok(Request {
-            path: path.to_string(),
-            query_string: match query_string {
-                Some(q) => Some(q.to_string()),
-                None => None
-            },
+        Ok(Self {
+            path,
+            query_string,
             method,
         })
     }
