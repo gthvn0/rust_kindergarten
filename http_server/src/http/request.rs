@@ -4,7 +4,6 @@ use std::fmt::{Debug, Display, Formatter, Result as FmtResult};
 use std::str;
 use std::str::Utf8Error;
 
-#[allow(dead_code)]
 pub struct Request {
     path: String,
     query_string: Option<String>,
@@ -63,7 +62,6 @@ fn get_next_word(request: &str) -> Option<(&str, &str)> {
     None
 }
 
-#[allow(dead_code)]
 pub enum ParseError {
     InvalidRequest,
     InvalidEncoding,

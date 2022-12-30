@@ -1,6 +1,5 @@
 use std::str::FromStr;
 
-#[allow(dead_code)]
 #[derive(Debug)]
 pub enum Method {
     GET,
