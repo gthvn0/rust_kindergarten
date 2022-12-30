@@ -43,8 +43,8 @@ impl Server {
                             println!("Read {} bytes", n);
 
                             match Request::try_from(&buf[..]) {
-                                Ok(_req) => {
-                                    unimplemented!()
+                                Ok(req) => {
+                                    dbg!(req);
                                 }
                                 Err(e) => println!("Failed to parse request: {}", e),
                             }
