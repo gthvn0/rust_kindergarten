@@ -34,7 +34,7 @@ impl TryFrom<&[u8]> for Request {
 
         // Now we can extract the different part from the slice of string
         let (method, request) = get_next_word(request).ok_or(ParseError::InvalidRequest)?;
-        let (path, request) = get_next_word(request).ok_or(ParseError::InvalidRequest)?;
+        let (mut path, request) = get_next_word(request).ok_or(ParseError::InvalidRequest)?;
         let (protocol, _) = get_next_word(request).ok_or(ParseError::InvalidRequest)?;
 
         println!("Checking protocol");
@@ -46,9 +46,22 @@ impl TryFrom<&[u8]> for Request {
         // Now we want to transform the method to a Method
         let method: Method = method.parse()?;
 
-        println!("method: {:?}", method);
-        println!("path: {:?}", path);
-        todo!()
+        // Now we need to split the path and the query string.
+        let mut query_string = None;
+
+        if let Some(i) = path.find('?') {
+            query_string = Some(&path[i+1..]);
+            path = &path[..i];
+        }
+
+        Ok(Request {
+            path: path.to_string(),
+            query_string: match query_string {
+                Some(q) => Some(q.to_string()),
+                None => None
+            },
+            method,
+        })
     }
 }
 
