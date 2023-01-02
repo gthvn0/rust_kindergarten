@@ -24,8 +24,7 @@ impl<'buf> QueryString<'buf> {
 }
 
 impl<'buf> From<&'buf str> for QueryString<'buf> {
-
-    fn from(s:&'buf str) -> Self {
+    fn from(s: &'buf str) -> Self {
         let mut data: HashMap<&'buf str, Value<'buf>> = HashMap::new();
 
         for sub_str in s.split('&') {
@@ -34,7 +33,7 @@ impl<'buf> From<&'buf str> for QueryString<'buf> {
 
             if let Some(i) = sub_str.find('=') {
                 key = &sub_str[..i];
-                val = &sub_str[i+1..];
+                val = &sub_str[i + 1..];
             }
 
             // At this point we need to check if the key is a new one or not
@@ -45,14 +44,12 @@ impl<'buf> From<&'buf str> for QueryString<'buf> {
                 .and_modify(|existing: &mut Value| match existing {
                     Value::Single(prev_val) => {
                         *existing = Value::Multiple(vec![prev_val, val]);
-                    },
-                    Value::Multiple(vec) => {vec.push(val)},
+                    }
+                    Value::Multiple(vec) => vec.push(val),
                 })
                 .or_insert(Value::Single(val));
         }
 
-        QueryString {
-            data,
-        }
+        QueryString { data }
     }
 }

@@ -1,5 +1,5 @@
-use crate::Request;
-use std::{io::Read, net::TcpListener};
+use crate::http::{Request, Response, StatusCode};
+use std::{io::Read, io::Write, net::TcpListener};
 
 // Everything is private by default
 // Add pub keyword to make it public
@@ -45,8 +45,12 @@ impl Server {
                             match Request::try_from(&buf[..]) {
                                 Ok(req) => {
                                     dbg!(req);
+                                    let response = Response::new(StatusCode::NotFound, None);
+                                    write!(stream, "{}", response);
                                 }
-                                Err(e) => println!("Failed to parse request: {}", e),
+                                Err(e) => {
+                                    println!("Failed to parse request: {}", e);
+                                }
                             }
                         }
                         Err(e) => println!("Failed to read data: {}", e),
