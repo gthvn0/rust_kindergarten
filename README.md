@@ -1,4 +1,4 @@
-# Rust Kindergarten
+# Rust sandkasten
 
 ![Rust Logo](https://www.rust-lang.org/static/images/rust-logo-blk.svg)
 
