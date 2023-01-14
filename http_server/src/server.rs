@@ -43,9 +43,10 @@ impl Server {
                             println!("Read {} bytes", n);
 
                             match Request::try_from(&buf[..]) {
-                                Ok(req) => {
-                                    dbg!(req);
-                                    let response = Response::new(StatusCode::NotFound, None);
+                                Ok(request) => {
+                                    dbg!(request);
+                                    let response = Response::new(StatusCode::Ok,
+                                        Some("<h1>Hello</h1>".to_string()));
                                     write!(stream, "{}", response);
                                 }
                                 Err(e) => {
