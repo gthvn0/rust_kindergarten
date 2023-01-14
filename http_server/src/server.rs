@@ -42,16 +42,21 @@ impl Server {
                         Ok(n) => {
                             println!("Read {} bytes", n);
 
-                            match Request::try_from(&buf[..]) {
+                            let response = match Request::try_from(&buf[..]) {
                                 Ok(request) => {
                                     dbg!(request);
-                                    let response = Response::new(StatusCode::Ok,
-                                        Some("<h1>Hello</h1>".to_string()));
-                                    write!(stream, "{}", response);
+                                    Response::new(
+                                        StatusCode::Ok,
+                                        Some("<h1>Hello</h1>".to_string()))
                                 }
                                 Err(e) => {
-                                    println!("Failed to parse request: {}", e);
+                                    println!("Failed to parse the request: {}", e);
+                                    Response::new(StatusCode::BadRequest, None)
                                 }
+                            };
+
+                            if let Err(e) = response.send(&mut stream) {
+                                println!("Failed to send response: {}", e);
                             }
                         }
                         Err(e) => println!("Failed to read data: {}", e),
