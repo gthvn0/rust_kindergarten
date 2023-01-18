@@ -1,5 +1,13 @@
-use crate::http::{Request, Response, StatusCode};
-use std::{io::Read, io::Write, net::TcpListener};
+use crate::http::{Request, Response, StatusCode, ParseError};
+use std::{io::Read, net::TcpListener};
+
+pub trait Handler {
+    fn handle_request(&mut self, request: &Request) -> Response;
+    fn handle_bad_request(&mut self, error: &ParseError) -> Response {
+        println!("Failed to parse request: {}", error);
+        Response::new(StatusCode::BadRequest, None)
+    }
+}
 
 // Everything is private by default
 // Add pub keyword to make it public
@@ -24,7 +32,7 @@ impl Server {
     // As we never return here we can take the ownership, no need
     // to borrow it.
     // => run takes the ownership of self
-    pub fn run(self) {
+    pub fn run(self, mut handler: impl Handler) {
         println!("Listening on {}", self.addr);
 
         let listener = TcpListener::bind(&self.addr).unwrap();
@@ -43,16 +51,8 @@ impl Server {
                             println!("Read {} bytes", n);
 
                             let response = match Request::try_from(&buf[..]) {
-                                Ok(request) => {
-                                    dbg!(request);
-                                    Response::new(
-                                        StatusCode::Ok,
-                                        Some("<h1>Hello</h1>".to_string()))
-                                }
-                                Err(e) => {
-                                    println!("Failed to parse the request: {}", e);
-                                    Response::new(StatusCode::BadRequest, None)
-                                }
+                                Ok(request) => handler.handle_request(&request),
+                                Err(e)   => handler.handle_bad_request(&e),
                             };
 
                             if let Err(e) = response.send(&mut stream) {
