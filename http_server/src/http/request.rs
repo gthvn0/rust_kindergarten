@@ -12,6 +12,21 @@ pub struct Request<'buf> {
     method: Method,
 }
 
+// Implement the getters
+impl<'buf> Request<'buf> {
+    pub fn path(&self) -> &str {
+        &self.path
+    }
+
+    pub fn query_string(&self) -> Option<&QueryString<'buf>> {
+        self.query_string().as_ref()
+    }
+
+    pub fn method(&self) -> &Method {
+        &self.method
+    }
+}
+
 impl From<Utf8Error> for ParseError {
     fn from(_: Utf8Error) -> Self {
         ParseError::InvalidEncoding
