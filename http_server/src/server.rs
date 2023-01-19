@@ -1,4 +1,4 @@
-use crate::http::{Request, Response, StatusCode, ParseError};
+use crate::http::{ParseError, Request, Response, StatusCode};
 use std::{io::Read, net::TcpListener};
 
 pub trait Handler {
@@ -52,7 +52,7 @@ impl Server {
 
                             let response = match Request::try_from(&buf[..]) {
                                 Ok(request) => handler.handle_request(&request),
-                                Err(e)   => handler.handle_bad_request(&e),
+                                Err(e) => handler.handle_bad_request(&e),
                             };
 
                             if let Err(e) = response.send(&mut stream) {

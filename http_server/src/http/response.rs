@@ -1,4 +1,4 @@
-use std::io::{Write, Result as IoResult};
+use std::io::{Result as IoResult, Write};
 
 use super::status_code::StatusCode;
 
