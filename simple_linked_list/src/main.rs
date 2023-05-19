@@ -12,6 +12,16 @@ impl<T> LinkedList<T> {
         LinkedList(None)
     }
 
+    fn is_tail(&self) -> bool {
+        match &self.0 {
+            None => false, // Empty list has no element so it has no tail
+            Some((_, child)) => match child.0 {
+                None => true,
+                _ => false,
+            },
+        }
+    }
+
     fn len(&self) -> u32 {
         match &self.0 {
             None => 0,
@@ -45,15 +55,13 @@ impl<T> LinkedList<T> {
     }
 
     fn pop_tail(&mut self) -> Option<T> {
-        match &mut self.0 {
-            None => None,
-            Some((_, child)) => {
-                if child.len() == 0 {
-                    let (val, _) = self.0.take().unwrap();
-                    Some(val)
-                } else {
-                    child.pop_tail()
-                }
+        if self.is_tail() {
+            let (val, _) = self.0.take().unwrap();
+            return Some(val);
+        } else {
+            match &mut self.0 {
+                None => None,
+                Some((_, child)) => child.pop_tail(),
             }
         }
     }
