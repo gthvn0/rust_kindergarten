@@ -77,3 +77,7 @@ cargo new --vcs none monads
 ## Notebook
 
 - Give a try to [evcxr](https://github.com/google/evcxr/blob/main/evcxr_jupyter/README.md) for Jupyter
+
+## Rust To Wasm
+
+- Start from Rust code and generate a valid wasm module

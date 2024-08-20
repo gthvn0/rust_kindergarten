@@ -1,0 +1,1 @@
+- to build and run it just type `./run.sh`
