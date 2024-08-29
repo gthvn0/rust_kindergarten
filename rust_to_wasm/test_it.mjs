@@ -1,5 +1,4 @@
-const { ALL } = require("dns");
-const fs = require("fs");
+import fs from 'node:fs';
 
 const wasmModule = fs.readFileSync("output.wasm");
 var memory; // We need to access the memory to read msg and log it

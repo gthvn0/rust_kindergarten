@@ -2,17 +2,16 @@
 
 ![Rust Logo](https://www.rust-lang.org/static/images/rust-logo-blk.svg)
 
-My [Rust](https://www.rust-lang.org/) playground
+My [Rust](https://www.rust-lang.org/) playground. Most of the stuff is just
+garbage.
 
 ## bm
-
-- Create a tool to manage directoris as bookmark.
+- Create a tool to manage directories as bookmark.
 - It will return a string that will be the directory to move on.
   - We will create an alias or function in the shell to *cd* into the directory
   - So we renamed the binary **bmr** to avoid confusion
 
 ### TODO
-
 - [X] Create the project
 ```
 cargo new --vcs none bm
@@ -33,7 +32,6 @@ cargo new --vcs none bm
   - `bmr del <bookmark name>`: delete the bookmark
   - `bmr add <bookmark name>`: add the current directory as a bookmark named *named*
 
-
 ### Usage
 
 - Install the **bmr**
@@ -51,7 +49,6 @@ home: /home/gthvn1
 /home/gthvn1#
 ```
 ## Codingame
-
 - Created using:
 ```
 cargo new --vcs none codingame
@@ -61,11 +58,9 @@ cargo new --vcs none codingame
 - Maybe have a look to [code wars](https://www.codewars.com)
 
 ## HTTP Server
-
 - It is part of the [udemy course](https://www.udemy.com/course/rust-fundamentals/) to learn rust.
 
 ## Monads
-
 - Created using:
 ```
 cargo new --vcs none monads
@@ -75,9 +70,7 @@ cargo new --vcs none monads
 
 
 ## Notebook
-
 - Give a try to [evcxr](https://github.com/google/evcxr/blob/main/evcxr_jupyter/README.md) for Jupyter
 
 ## Rust To Wasm
-
 - Start from Rust code and generate a valid wasm module
