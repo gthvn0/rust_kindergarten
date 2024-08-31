@@ -7,16 +7,21 @@ fn panic(_info: &core::panic::PanicInfo) -> ! {
 }
 
 extern "C" {
-    fn loggme(msg: *const u8, len: i32);
+    fn ext_log(msg: *const u8, len: i32);
+    fn ext_draw_rectangle(x: i32, y: i32, w: i32, h: i32, color: u32);
 }
 
 #[no_mangle]
-pub fn a_sum(a: i32, b: i32) -> i32 {
-    let msg = "The answer is";
-    let msg_len = msg.len() as i32;
+pub fn render() {
+// nothing for now
+}
 
+#[no_mangle]
+pub fn draw(width: i32, height: i32) {
+    _ = width;
+    _ = height;
     unsafe {
-        loggme(msg.as_ptr(), msg_len);
+        let blue = 0x00_00_FF_FF as u32;
+        ext_draw_rectangle(0, 0, 30, 30, blue);
     }
-    a + b
 }
