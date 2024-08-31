@@ -7,15 +7,17 @@ extern "C" {
 
 #[no_mangle]
 pub fn render() {
-// nothing for now
+    // nothing for now
 }
 
 #[no_mangle]
 pub fn draw(width: i32, height: i32) {
     _ = width;
     _ = height;
+    let blue = 0x00_00_FF_FF_u32;
+    let msg = "Hello, Sailor!";
     unsafe {
-        let blue = 0x00_00_FF_FF as u32;
+        ext_log(msg.as_ptr(), msg.len() as i32);
         ext_draw_rectangle(0, 0, 30, 30, blue);
     }
 }
