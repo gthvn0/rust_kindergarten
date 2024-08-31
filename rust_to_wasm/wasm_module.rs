@@ -1,10 +1,4 @@
-#![no_std]
 #![no_main]
-
-#[panic_handler]
-fn panic(_info: &core::panic::PanicInfo) -> ! {
-    loop {}
-}
 
 extern "C" {
     fn ext_log(msg: *const u8, len: i32);

@@ -1,0 +1,10 @@
+[package]
+name = "rust_to_wasm"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "wasm_module"
+path = "./wasm_module.rs"
+
+[dependencies]

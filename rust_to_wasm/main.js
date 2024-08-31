@@ -72,7 +72,7 @@ function step(timeStamp) {
 }
 
 WebAssembly
-    .instantiateStreaming(fetch("./output.wasm"), importObject)
+    .instantiateStreaming(fetch("./target/wasm32-unknown-unknown/debug/wasm_module.wasm"), importObject)
     .then((w) => {
         wasm = w;
         memory = w.instance.exports["memory"];
