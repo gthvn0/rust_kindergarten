@@ -3,6 +3,7 @@
 
 var wasm = null;
 var memory = null;
+var game = null;
 
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
@@ -48,16 +49,16 @@ function logKey(e) {
   // LEFT  -> 3
   switch (e.keyCode) {
     case 37: // Left
-      wasm.instance.exports.key(3);
+      wasm.instance.exports.key(game, 3);
       break;
     case 38: // Up
-      wasm.instance.exports.key(0);
+      wasm.instance.exports.key(game, 0);
       break;
     case 39: // Right
-      wasm.instance.exports.key(1);
+      wasm.instance.exports.key(game, 1);
       break;
     case 40: // Down
-      wasm.instance.exports.key(2);
+      wasm.instance.exports.key(game, 2);
       break;
   }
 }
@@ -67,8 +68,8 @@ function logKey(e) {
 // We are animating the canvas...
 
 function step(timeStamp) {
-  wasm.instance.exports.update();
-  wasm.instance.exports.render();
+  wasm.instance.exports.update(game);
+  wasm.instance.exports.render(game);
   window.requestAnimationFrame(step);
 }
 
@@ -77,6 +78,7 @@ WebAssembly
     .then((w) => {
         wasm = w;
         memory = w.instance.exports["memory"];
-        w.instance.exports.init(canvas.width, canvas.height);
+        game = w.instance.exports.init(canvas.width, canvas.height);
+        console.log(game);
         window.requestAnimationFrame(step)});
 
