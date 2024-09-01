@@ -67,6 +67,7 @@ function logKey(e) {
 // We are animating the canvas...
 
 function step(timeStamp) {
+  wasm.instance.exports.update();
   wasm.instance.exports.render();
   window.requestAnimationFrame(step);
 }
@@ -76,6 +77,6 @@ WebAssembly
     .then((w) => {
         wasm = w;
         memory = w.instance.exports["memory"];
-        w.instance.exports.draw(canvas.width, canvas.height);
+        w.instance.exports.init(canvas.width, canvas.height);
         window.requestAnimationFrame(step)});
 
