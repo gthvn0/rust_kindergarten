@@ -4,6 +4,7 @@
 var wasm = null;
 var memory = null;
 var game = null;
+var currentTime = null;
 
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
@@ -68,8 +69,15 @@ function logKey(e) {
 // We are animating the canvas...
 
 function step(timeStamp) {
-  wasm.instance.exports.update(game);
-  wasm.instance.exports.render(game);
+  if (currentTime !== null) {
+    const elapsed = timeStamp - currentTime;
+    console.log(elapsed);
+    wasm.instance.exports.update(game, elapsed);
+    wasm.instance.exports.render(game);
+  } 
+
+  // Update the current time
+  currentTime = timeStamp;
   window.requestAnimationFrame(step);
 }
 

@@ -35,7 +35,10 @@ pub fn key(game: &mut Game, k: u32) {
 }
 
 #[no_mangle]
-pub fn update(game: &mut Game) {
+pub fn update(game: &mut Game, elapsed: i32) {
+    // Elapsed time is in MS
+    _ = elapsed;
+
     let new_x = game.rect.x as i32 + game.rect.speed_x;
     if 0 <= new_x && new_x <= (game.width as i32 - game.rect.width as i32) {
         game.rect.x = new_x as u32;
@@ -73,8 +76,8 @@ pub fn init(width: u32, height: u32) -> *mut Game {
             y: 1,
             width: 30,
             height: 30,
-            speed_x: 1,
-            speed_y: 1,
+            speed_x: 0,
+            speed_y: 0,
         },
     });
 
