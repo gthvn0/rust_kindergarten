@@ -58,11 +58,11 @@ fn clear_screen() {
 #[no_mangle]
 pub fn key(k: u32) {
     match k {
-        0 => {} // Up
-        1 => {} // Right
-        2 => {} // Down
-        3 => {} // Left
-        _ => {} // Nothing to do
+        0 => unsafe { GAME.rect.speed_y = -1 }, // Up
+        1 => unsafe { GAME.rect.speed_x = 1 },  // Right
+        2 => unsafe { GAME.rect.speed_y = 1 },  // Down
+        3 => unsafe { GAME.rect.speed_x = -1 }, // Left
+        _ => {}                                 // Nothing to do
     }
 }
 
