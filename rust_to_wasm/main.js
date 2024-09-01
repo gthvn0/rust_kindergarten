@@ -42,24 +42,24 @@ window.addEventListener("keydown", logKey);
 function logKey(e) {
   console.log(e);
 
-  let keycode = 5; // 5 is not managed
-
+  // UP    -> 0
+  // RIGHT -> 1
+  // DOWN  -> 2
+  // LEFT  -> 3
   switch (e.keyCode) {
     case 37: // Left
-      keycode = 2;
+      wasm.instance.exports.key(3);
       break;
     case 38: // Up
-      keycode = 0;
+      wasm.instance.exports.key(0);
       break;
     case 39: // Right
-      keycode = 3;
+      wasm.instance.exports.key(1);
       break;
     case 40: // Down
-      keycode = 1;
+      wasm.instance.exports.key(2);
       break;
   }
-
-  //wasm.instance.exports.game_keydown(keycode);
 }
 
 // We are doing animation using requestAnimationFrame:
