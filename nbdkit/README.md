@@ -17,6 +17,7 @@
 
 - Then in Rust
   - It creates an empty disk with a specific header...
+  - To start the server: `nbdkit -fv ./target/debug/libmem_plugin.so`
   - In the Rust implementation if everything works as expected you should be able to read the disk using `dd` and see:
   ```
   ❯ hexdump -C read.bin

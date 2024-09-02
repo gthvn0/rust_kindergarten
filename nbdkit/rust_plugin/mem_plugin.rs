@@ -32,9 +32,9 @@ impl Server for MemoryDisk {
 
     fn read_at(&self, buf: &mut [u8], offset: u64) -> Result<()> {
         let disk = DISK.lock().unwrap();
-        let ofs = offset as usize;
-        let end = ofs + buf.len();
-        buf.copy_from_slice(&disk[ofs..end]);
+        let begin = offset as usize;
+        let end = begin + buf.len();
+        buf.copy_from_slice(&disk[begin..end]);
         Ok(())
     }
 
