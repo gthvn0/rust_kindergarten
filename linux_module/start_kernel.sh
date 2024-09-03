@@ -20,4 +20,4 @@ qemu-system-x86_64 \
 	-nographic \
 	-kernel ${KERNEL_SRC}/arch/x86/boot/bzImage \
 	-initrd ${INITRAMFS} \
-	-append 'loglevel=15 console=ttyS0 init=/bin/sh'
+	-append 'console=ttyS0 init=/bin/sh'
