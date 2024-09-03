@@ -1,6 +1,6 @@
 use nbdkit::*;
 use std::{
-    fs::File,
+    fs::OpenOptions,
     io::{Read, Seek, Write},
 };
 
@@ -37,14 +37,24 @@ impl Server for MemoryDisk {
     }
 
     fn read_at(&self, buf: &mut [u8], offset: u64) -> Result<()> {
-        let mut f = File::open(self.file.clone()).unwrap();
+        let mut f = OpenOptions::new()
+            .read(true)
+            .write(true)
+            .create(true)
+            .open(self.file.clone())
+            .unwrap();
         f.seek(std::io::SeekFrom::Start(offset)).unwrap();
         let _ = f.read(buf);
         Ok(())
     }
 
     fn write_at(&self, buf: &[u8], offset: u64, _flags: Flags) -> Result<()> {
-        let mut f = File::open(self.file.clone()).unwrap();
+        let mut f = OpenOptions::new()
+            .read(true)
+            .write(true)
+            .create(true)
+            .open(self.file.clone())
+            .unwrap();
         f.seek(std::io::SeekFrom::Start(offset)).unwrap();
         let _ = f.write_all(buf);
         Ok(())
