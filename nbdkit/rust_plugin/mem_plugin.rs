@@ -1,16 +1,25 @@
-use lazy_static::lazy_static;
 use nbdkit::*;
-use std::sync::Mutex;
+use std::{
+    fs::File,
+    io::{Read, Seek, Write},
+};
 
-// The disk.
-lazy_static! {
-    static ref SIZE: usize = 1024 * 1024; // 1Mo
-    static ref DISK: Mutex<Vec<u8>> = Mutex::new(vec![0; 0]);
+struct MemoryDisk {
+    file: String,
 }
 
-#[derive(Default)]
-struct MemoryDisk {
-    _dummy: u8, // it is needed otherwise Box::new won't allocate anything...
+impl Default for MemoryDisk {
+    fn default() -> Self {
+        MemoryDisk::new()
+    }
+}
+
+impl MemoryDisk {
+    pub fn new() -> Self {
+        MemoryDisk {
+            file: "./disk.raw".to_string(),
+        }
+    }
 }
 
 impl Server for MemoryDisk {
@@ -19,36 +28,31 @@ impl Server for MemoryDisk {
     }
 
     fn open(_readonly: bool) -> Result<Box<dyn Server>> {
-        // Write the header "Hello, Sailor!" at the beginning of the disk.
-        let header = b"Hello, Sailor!";
-        DISK.lock().unwrap()[..header.len()].copy_from_slice(header);
-
         Ok(Box::<MemoryDisk>::default())
     }
 
     fn get_size(&self) -> Result<i64> {
-        Ok(DISK.lock().unwrap().len() as i64)
+        let size: i64 = 1024; // TODO:
+        Ok(size)
     }
 
     fn read_at(&self, buf: &mut [u8], offset: u64) -> Result<()> {
-        let disk = DISK.lock().unwrap();
-        let begin = offset as usize;
-        let end = begin + buf.len();
-        buf.copy_from_slice(&disk[begin..end]);
+        let mut f = File::open(self.file.clone()).unwrap();
+        f.seek(std::io::SeekFrom::Start(offset)).unwrap();
+        let _ = f.read(buf);
+        Ok(())
+    }
+
+    fn write_at(&self, buf: &[u8], offset: u64, _flags: Flags) -> Result<()> {
+        let mut f = File::open(self.file.clone()).unwrap();
+        f.seek(std::io::SeekFrom::Start(offset)).unwrap();
+        let _ = f.write_all(buf);
         Ok(())
     }
 
     fn thread_model() -> Result<ThreadModel> {
         Ok(ThreadModel::SerializeConnections)
     }
-
-    fn get_ready() -> Result<()> {
-        *DISK.lock().unwrap() = vec![0; *SIZE];
-        Ok(())
-    }
 }
 
-plugin!(MemoryDisk {
-    thread_model,
-    get_ready
-});
+plugin!(MemoryDisk { thread_model });

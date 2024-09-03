@@ -8,5 +8,4 @@ crate-type = ["cdylib"]
 path = "./mem_plugin.rs"
 
 [dependencies]
-lazy_static = "1.5.0"
 nbdkit = "0.3.0"
