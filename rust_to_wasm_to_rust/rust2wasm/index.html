@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>App</title>
+  </head>
+  <body>
+    <script type="text/javascript">
+      const env = {
+      };
+
+      WebAssembly.instantiateStreaming(fetch("./target/wasm32-unknown-unknown/release/wasm_module.wasm"), {
+        env: env,
+      }).then((res) => {
+        sum3 = res.instance.exports["sum3"];
+	console.log(sum3(1, 2, 3));
+      });
+    </script>
+  </body>
+</html>
+
